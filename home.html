@@ -159,7 +159,6 @@
 
   <nav>
     <ul>
-      <li><a href="#websites">⚠️ Selling Websites</a></li>
       <li><a href="#games">👾Games</a></li>
       <li><a href="#challenge">🔥 Weekly Challenge</a></li>
       <li><a href="#admins">‼️ Rules & Punishments ‼️</a></li>
@@ -171,10 +170,6 @@
   </nav>
 
   <div class="container">
-    <section id="websites">
-      <h2>⚠️ Selling Custom Websites</h2>
-      <p>We design and sell custom websites tailored to your needs. Contact us to get started!</p>
-    </section>
 
     <section id="games">
       <h2>👾Games</h2>
@@ -257,17 +252,19 @@
     </section>
 
       <!-- Profile Section -->
-    <section id="profile">
-      <h2>👤 Profile</h2>
-      <p id="profileInfo"></p>
-      <button id="editProfileBtn">Edit Profile</button>
-    </section>
+<section id="profileSection" style="display:none; margin-top:20px;">
+  <h2>👤 Profile</h2>
+  <p id="profileInfo"></p>
+</section>
 
-    <section id="orderWebsite">
-      <h2>🖥️ Order a Custom Website</h2>
-      <textarea id="orderPrompt" placeholder="Describe your website request..." rows="4" style="width:100%;margin-top:10px;"></textarea>
-      <button id="orderBtn">Submit Order</button>
-      <p id="orderStatus" style="color:#ffa502;margin-top:10px;"></p>
+<button id="viewProfileBtn">View Profile</button>
+
+
+    <section id="Website">
+      <h2>🖥️Request a Custom Website</h2>
+      <textarea id="Prompt" placeholder="Describe your website request..." rows="4" style="width:100%;margin-top:10px;"></textarea>
+      <button id="Btn">Submit Request</button>
+      <p id="Status" style="color:#ffa502;margin-top:10px;"></p>
     </section>
 
 
@@ -320,13 +317,41 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
         <strong>Phone:</strong> ${storedUser.phone}
       `;
       alert("✅ Profile updated");
+      // Load profile info from localStorage
+function loadProfile() {
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  if (storedUser) {
+    document.getElementById("profileInfo").innerHTML = `
+      <strong>Name:</strong> ${storedUser.firstName} ${storedUser.lastName}<br>
+      <strong>Email:</strong> ${storedUser.email}<br>
+      <strong>Phone:</strong> ${storedUser.phone}
+    `;
+  } else {
+    document.getElementById("profileInfo").innerText = "❌ No user profile found.";
+  }
+}
+
+// Toggle profile section
+document.getElementById("viewProfileBtn").addEventListener("click", () => {
+  const section = document.getElementById("profileSection");
+
+  if (section.style.display === "none") {
+    loadProfile();
+    section.style.display = "block";
+    document.getElementById("viewProfileBtn").innerText = "Hide Profile";
+  } else {
+    section.style.display = "none";
+    document.getElementById("viewProfileBtn").innerText = "View Profile";
+  }
+});
+
     });
 
 
- document.getElementById("orderBtn").addEventListener("click", () => {
+ document.getElementById("Btn").addEventListener("click", () => {
   const storedUser = JSON.parse(localStorage.getItem("user"));
-  const prompt = document.getElementById("orderPrompt").value.trim();
-  const status = document.getElementById("orderStatus");
+  const prompt = document.getElementById("Prompt").value.trim();
+  const status = document.getElementById("Status");
 
   // Check if user exists
   if (!storedUser) {
