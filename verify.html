@@ -29,8 +29,7 @@
     if (pendingEmail) {
       emailTarget.innerText = pendingEmail;
     } else {
-      status.innerHTML = "No email found. <a href='signup.html' style='color:var(--accent);'>Sign up again</a>.";
-      document.getElementById('verifyBtn').disabled = true;
+      window.location.href = 'index.html';
     }
 
     document.getElementById('verifyBtn').addEventListener('click', () => {
