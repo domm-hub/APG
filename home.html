@@ -95,10 +95,15 @@
 <footer>&copy; 2026 AllProGamerz</footer>
 
 <script>
+const token = sessionStorage.getItem('token');
+if (!token) { window.location.href = 'login.html'; }
+
 let authenticatedUser = null;
 
 function verifySession() {
-  fetch('https://apg-api.vercel.app/api/check-session', { credentials: 'include' })
+  fetch('https://apg-api.vercel.app/api/check-session', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
       if (data && data.status === 'authenticated') {
@@ -112,9 +117,8 @@ function verifySession() {
 verifySession();
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  fetch('https://apg-api.vercel.app/api/logout', { method: 'POST', credentials: 'include' })
-    .then(() => { window.location.href = 'login.html'; })
-    .catch(() => { window.location.href = 'login.html'; });
+  sessionStorage.removeItem('token');
+  window.location.href = 'login.html';
 });
 
 function populateProfileUI() {
