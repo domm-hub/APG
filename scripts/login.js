@@ -29,7 +29,8 @@ signinBtn.addEventListener("click", () => {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(payload) // Converts JavaScript object to JSON string
+    credentials: 'include',
+    body: JSON.stringify(payload)
   })
   .then(response => response.json())
   .then(data => {
