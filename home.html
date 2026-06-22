@@ -66,6 +66,7 @@
       text-decoration: none;
       margin-top: 10px;
       cursor: pointer;
+      border: none;
     }
 
     footer {
@@ -82,6 +83,21 @@
       margin-top: 10px;
       border-radius: 8px;
     }
+
+    #editProfile input {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: none;
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    #editProfile h3 {
+      margin-top: 10px;
+      color: #ffa502;
+    }
   </style>
 </head>
 
@@ -89,7 +105,7 @@
 
 <header>
   <h1>🎮🔥 Welcome to AllProGamerz 🔥🎮</h1>
-  <button id="logoutBtn">🚪 Sign Out</button>
+  <button id="logoutBtn" class="btn">🚪 Sign Out</button>
 </header>
 
 <nav>
@@ -134,6 +150,20 @@
 
     <div id="profileSection">
       <p id="profileInfo"></p>
+
+      <a id="inviteBtn" class="btn" href="https://chat.whatsapp.com/HrsiwK7Lz6JGOb4zRo6CYo" target="_blank">
+        📩 Invite Friends
+      </a>
+
+      <div id="editProfile" style="margin-top:15px;">
+        <h3>✏️ Edit Profile</h3>
+        <input type="text" id="editFirstName" placeholder="First Name">
+        <input type="text" id="editLastName" placeholder="Last Name">
+        <input type="email" id="editEmail" placeholder="Email">
+        <input type="text" id="editPhone" placeholder="Phone">
+        <button id="saveProfileBtn" class="btn">💾 Save Changes</button>
+        <p id="editStatus" style="color:#ffa502;margin-top:10px;"></p>
+      </div>
     </div>
   </section>
 
@@ -146,89 +176,100 @@
 
 </div>
 
-<!-- ✅ FOOTER (FIXED HERE INSIDE FULL CODE) -->
 <footer>
   © 2026 AllProGamerz 🎮🔥 <br>
   🎮 Private friend-group project. Not a commercial service.
 </footer>
 
 <script>
-
-// 🚪 Sign Out
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.setItem("isSignedIn", "false");
   window.location.href = "index.html";
 });
 
-// 👤 Profile
 function loadProfile() {
   const user = JSON.parse(localStorage.getItem("user"));
-
   if (!user) {
     document.getElementById("profileInfo").innerText = "❌ No user found";
     return;
   }
-
   document.getElementById("profileInfo").innerHTML =
     "👤 Name: " + user.firstName + " " + user.lastName + "<br>" +
     "📧 Email: " + user.email + "<br>" +
     "📱 Phone: " + user.phone;
+  document.getElementById("editFirstName").value = user.firstName;
+  document.getElementById("editLastName").value = user.lastName;
+  document.getElementById("editEmail").value = user.email;
+  document.getElementById("editPhone").value = user.phone;
 }
 
 document.getElementById("viewProfileBtn").addEventListener("click", () => {
   const box = document.getElementById("profileSection");
-
   if (box.style.display === "block") {
     box.style.display = "none";
+    document.getElementById("viewProfileBtn").innerText = "👁️ View Profile";
   } else {
     loadProfile();
     box.style.display = "block";
+    document.getElementById("viewProfileBtn").innerText = "🙈 Hide Profile";
   }
 });
 
-// 🖥️ Website Request (WhatsApp)
+document.getElementById("saveProfileBtn").addEventListener("click", () => {
+  const firstName = document.getElementById("editFirstName").value.trim();
+  const lastName = document.getElementById("editLastName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const phone = document.getElementById("editPhone").value.trim();
+  const status = document.getElementById("editStatus");
+  if (!firstName || !lastName || !email || !phone) {
+    status.innerText = "❌ Please fill all fields.";
+    return;
+  }
+  const updatedUser = { firstName, lastName, email, phone };
+  localStorage.setItem("user", JSON.stringify(updatedUser));
+  status.innerText = "✅ Profile updated!";
+  loadProfile();
+});
+
 document.getElementById("Btn").addEventListener("click", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const prompt = document.getElementById("Prompt").value.trim();
   const status = document.getElementById("Status");
-
   if (!user) return status.innerText = "❌ No account found";
   if (!prompt) return status.innerText = "❌ Write your request";
-
   const msg =
     "👤 " + user.firstName + " " + user.lastName + "\n" +
     "📧 " + user.email + "\n" +
     "📱 " + user.phone + "\n\n" +
     "🖥️ " + prompt;
-
   const url = "https://wa.me/201110433394?text=" + encodeURIComponent(msg);
   window.open(url, "_blank");
-
   status.innerText = "✅ Sent!";
 });
 
-// 🎮 Challenge Submit
 document.getElementById("challengeBtn").addEventListener("click", () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const text = document.getElementById("challengeText").value.trim();
   const status = document.getElementById("challengeStatus");
 
-  if (!user) return status.innerText = "❌ No account";
-  if (!text) return status.innerText = "❌ Write something";
+  if (!user) {
+    status.innerText = "❌ No account";
+    return;
+  }
+  if (!text) {
+    status.innerText = "❌ Write something";
+    return;
+  }
 
   const msg =
     "👤 " + user.firstName + " " + user.lastName + "\n" +
     "📧 " + user.email + "\n" +
     "📱 " + user.phone + "\n\n" +
-    "🎯 " + text;
+    "🎯 " + text + "\n" +
+    "[Reminder: Please attach any files manually in WhatsApp]";
 
   const url = "https://wa.me/201144604623?text=" + encodeURIComponent(msg);
   window.open(url, "_blank");
 
   status.innerText = "✅ Sent!";
 });
-
-</script>
-
-</body>
-</html>
