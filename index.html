@@ -2,96 +2,199 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AllProGamerz - Login</title>
+  <title>🎮 AllProGamerz // Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #f0f0f0;
-      text-align: center;
-      padding: 40px;
-    }
-    input {
-      display: block;
-      margin: 10px auto;
-      padding: 10px;
-      width: 250px;
-      border-radius: 6px;
-      border: none;
-    }
-    button {
-      background: #1e90ff;
-      color: #fff;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      margin: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #3742fa;
-    }
-    #userStatus {
-      margin-top: 20px;
-      font-size: 16px;
-      color: #ffa502;
-    }
-  </style>
+  <link rel="icon" type="image/jpg" href="photo.png">
+  <!-- 🟢 Linking your clean stylesheet configuration -->
+  <link rel="stylesheet" href="styles/index.css">
 </head>
+
 <body>
-  <h1>🔑 AllProGamerz Sign In / Sign Up</h1>
 
-  <!-- Sign Up / Sign In Form -->
-  <input type="text" id="firstName" placeholder="First Name">
-  <input type="text" id="lastName" placeholder="Last Name">
-  <input type="email" id="email" placeholder="Email">
-  <input type="tel" id="phone" placeholder="Phone Number">
-  <input type="password" id="password" placeholder="Password">
-  <button id="signupBtn">Sign Up</button>
-  <button id="signinBtn">Sign In</button>
+<header>
+  <h1>🎮🔥 Welcome to AllProGamerz 🔥🎮</h1>
+  <button id="logoutBtn">🚪 Sign Out</button>
+</header>
 
-  <p id="userStatus">Not signed in</p>
+<nav>
+  <ul>
+    <li><a href="#games">👾 Games</a></li>
+    <li><a href="#challenge">🔥 Weekly Challenge</a></li>
+    <li><a href="#prize">🏆 Prize Alerts</a></li>
+    <li><a href="#contact">📞 Contact</a></li>
+  </ul>
+</nav>
 
-  <script>
-    const status = document.getElementById("userStatus");
+<!-- Main container grid stays hidden until secure session handshake verifies -->
+<div id="mainWorkspace" class="container" style="display: none;">
 
-    // Sign Up
-    document.getElementById("signupBtn").addEventListener("click", () => {
-      const user = {
-        firstName: document.getElementById("firstName").value,
-        lastName: document.getElementById("lastName").value,
-        email: document.getElementById("email").value,
-        phone: document.getElementById("phone").value,
-        password: document.getElementById("password").value
-      };
-      localStorage.setItem("user", JSON.stringify(user));
-      status.innerText = "✅ Account created for " + user.email;
-      // Redirect to home page
-      window.location.href = "home.html";
+  <section id="games">
+    <h2>👾 Games</h2>
+    <a class="btn" href="Games.html" target="_blank">🚀 Explore Games</a>
+  </section>
+
+  <section id="challenge">
+    <h2>🔥 Weekly Challenge</h2>
+    <textarea id="challengeText" rows="3" placeholder="Describe your challenge proof details..."></textarea>
+    <input type="file" id="challengeFiles" multiple>
+    <button id="challengeBtn">🎯 Submit Challenge</button>
+    <p id="challengeStatus" style="color: #ffa502; margin-top: 10px;"></p>
+  </section>
+
+  <section id="prize">
+    <h2>🏆 Prize Alerts</h2>
+    <p>🎁 Winners get free custom websites!</p>
+  </section>
+
+  <section id="contact">
+    <h2>📞 Contact Us</h2>
+    <a class="btn" href="https://wa.me" target="_blank">
+      💬 WhatsApp Contact
+    </a>
+  </section>
+
+  <section>
+    <h2>👤 Profile</h2>
+    <button id="viewProfileBtn">👁️ View Profile</button>
+
+    <div id="profileSection">
+      <p id="profileInfo">⏳ Fetching your secure profile data...</p>
+
+      <a id="inviteBtn" class="btn" href="https://whatsapp.com" target="_blank">
+        📩 Invite Friends
+      </a>
+
+      <div id="editProfile">
+        <h3>✏️ Edit Profile</h3>
+        <input type="text" id="editFirstName" placeholder="First Name">
+        <input type="text" id="editLastName" placeholder="Last Name">
+        <input type="email" id="editEmail" placeholder="Email" disabled>
+        <input type="text" id="editPhone" placeholder="Phone">
+        <button id="saveProfileBtn">💾 Save Changes</button>
+        <p id="editStatus" style="color:#ffa502; margin-top:10px;"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>🖥️ Request a Custom Website</h2>
+    <textarea id="Prompt" rows="4" placeholder="Describe the layout theme ideas or layout pages you want built..."></textarea>
+    <button id="Btn">🚀 Submit Request</button>
+    <p id="Status" style="color: #ffa502; margin-top: 10px;"></p>
+  </section>
+
+</div>
+
+<footer>
+  © 2026 AllProGamerz 🎮🔥 <br>
+  🎮 Private friend-group project. Stays online 24/7.
+</footer>
+
+<script>
+let authenticatedUser = null;
+
+// Validate active user authentication tokens against your live Vercel cluster deployment
+function verifySession() {
+  fetch('https://apg-api.vercel.app/api/check-session', { credentials: 'include' })
+    .then(response => {
+      if (response.status === 200) {
+        return response.json();
+      } else {
+        window.location.href = "login.html";
+      }
+    })
+    .then(data => {
+      if (data && data.status === 'authenticated') {
+        authenticatedUser = data.user;
+        document.getElementById("mainWorkspace").style.display = "block";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      window.location.href = "login.html";
     });
+}
 
-  // Sign In
-document.getElementById("signinBtn").addEventListener("click", () => {
-  const storedUser = JSON.parse(localStorage.getItem("user"));
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+verifySession();
 
-  if (!storedUser) {
-    alert("❌ No account found. Please sign up first.");
+// Secure Logout Route Sequence
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  fetch('https://apg-api.vercel.app/api/logout', { 
+    method: 'POST', 
+    credentials: 'include' 
+  })
+  .then(() => {
+    window.location.href = "login.html";
+  })
+  .catch(() => {
+    window.location.href = "login.html";
+  });
+});
+
+function populateProfileUI() {
+  if (!authenticatedUser) {
+    document.getElementById("profileInfo").innerText = "❌ Session state invalid.";
     return;
   }
+  document.getElementById("profileInfo").innerHTML =
+    "📧 Identity: " + authenticatedUser.email + "<br>" +
+    "🛡️ Access: " + (authenticatedUser.verified ? "✅ Fully Verified Operative" : "❌ Unverified");
 
-  if (storedUser.email === email && storedUser.password === password) {
-    alert("✅ Signed in as " + storedUser.email);
-    // Redirect to home page
-    window.location.href = "home.html";
+  document.getElementById("editEmail").value = authenticatedUser.email;
+}
+
+document.getElementById("viewProfileBtn").addEventListener("click", () => {
+  const box = document.getElementById("profileSection");
+  if (box.style.display === "block") {
+    box.style.display = "none";
+    document.getElementById("viewProfileBtn").innerText = "👁️ View Profile";
   } else {
-    alert("❌ Invalid email or password");
+    populateProfileUI();
+    box.style.display = "block";
+    document.getElementById("viewProfileBtn").innerText = "🙈 Hide Profile";
   }
 });
 
-  </script>
+// Save locally for now / Hook to an database updater later
+document.getElementById("saveProfileBtn").addEventListener("click", () => {
+  const firstName = document.getElementById("editFirstName").value.trim();
+  const lastName = document.getElementById("editLastName").value.trim();
+  const phone = document.getElementById("editPhone").value.trim();
+  const status = document.getElementById("editStatus");
+  
+  if (!firstName || !lastName || !phone) {
+    status.innerText = "❌ Please fill all dynamic input fields.";
+    return;
+  }
+  status.innerText = "✅ Profile updated in memory!";
+});
+
+// Submit Prompts over WhatsApp API
+document.getElementById("Btn").addEventListener("click", () => {
+  const prompt = document.getElementById("Prompt").value.trim();
+  const status = document.getElementById("Status");
+  if (!authenticatedUser) return status.innerText = "❌ No active session found.";
+  if (!prompt) return status.innerText = "❌ Write your prompt request.";
+  
+  const msg = "👤 " + authenticatedUser.email + "\n\n🖥️ Prompt: " + prompt;
+  const url = "https://wa.me?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+  status.innerText = "✅ Opened in WhatsApp!";
+});
+
+// Submit Challenge logs
+document.getElementById("challengeBtn").addEventListener("click", () => {
+  const text = document.getElementById("challengeText").value.trim();
+  const status = document.getElementById("challengeStatus");
+
+  if (!authenticatedUser) return status.innerText = "❌ No active session found.";
+  if (!text) return status.innerText = "❌ Write your challenge details.";
+
+  const msg = "Contender: " + authenticatedUser.email + "\n\n🎯 Challenge Proof: " + text;
+  const url = "https://wa.me" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+  status.innerText = "✅ Opened in WhatsApp!";
+});
+</script>
 </body>
 </html>

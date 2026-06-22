@@ -1,0 +1,167 @@
+/* styles/index.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0d0d11; /* Deeper midnight gaming black */
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.2);
+}
+
+header h1 {
+    margin: 0 0 15px 0;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+}
+
+nav {
+    background: #1a1a24;
+    padding: 5px 15px;
+    border-bottom: 1px solid #2f3542;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0;
+    margin: 0;
+}
+
+nav li {
+    margin: 10px 15px;
+}
+
+nav a {
+    color: #ffa502;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s ease;
+}
+
+nav a:hover {
+    color: #ff7f50;
+}
+
+.container {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+section {
+    background: #161622; /* High-contrast card surfaces */
+    padding: 30px;
+    margin: 25px 0;
+    border-radius: 12px;
+    border: 1px solid #232334;
+    text-align: left; /* Left align text content inside dashboards */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+section h2 {
+    margin-top: 0;
+    color: #ffffff;
+    font-size: 20px;
+    border-left: 4px solid #ff4757;
+    padding-left: 12px;
+}
+
+/* Upgraded Input Element matching your layout styles */
+input, textarea {
+    display: block;
+    margin: 15px 0;
+    padding: 12px;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    border: 1px solid #2f3542;
+    background: #0f0f16;
+    color: #ffffff;
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+    max-width: 100%;
+}
+
+input:focus, textarea:focus {
+    border-color: #1e90ff;
+    box-shadow: 0 0 8px rgba(30, 144, 255, 0.3);
+}
+
+/* Button Elements matching your exact styles */
+button, .btn {
+    display: inline-block;
+    background: #1e90ff;
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    margin-top: 10px;
+    margin-right: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+button:hover, .btn:hover {
+    background: #3742fa;
+}
+
+#logoutBtn {
+    background: #2f3542;
+    border: 1px solid #475269;
+    padding: 8px 16px;
+    margin: 0;
+}
+
+#logoutBtn:hover {
+    background: #ff4757;
+    border-color: #ff4757;
+}
+
+#profileSection {
+    display: none;
+    background: #0f0f16;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #2f3542;
+}
+
+#profileInfo {
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+#editProfile h3 {
+    margin-top: 20px;
+    color: #ffa502;
+    font-size: 16px;
+}
+
+footer {
+    text-align: center;
+    padding: 30px 15px;
+    background: #161622;
+    color: #888;
+    font-size: 13px;
+    line-height: 1.6;
+    border-top: 1px solid #232334;
+    margin-top: 60px;
+}

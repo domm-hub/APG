@@ -117,7 +117,7 @@
   </ul>
 </nav>
 
-<div class="container">
+<div id="mainWorkspace" class="container" style="display: none;">
 
   <section id="games">
     <h2>👾 Games</h2>
@@ -149,7 +149,7 @@
     <button id="viewProfileBtn" class="btn">👁️ View Profile</button>
 
     <div id="profileSection">
-      <p id="profileInfo"></p>
+      <p id="profileInfo">⏳ Loading cloud records...</p>
 
       <a id="inviteBtn" class="btn" href="https://chat.whatsapp.com/HrsiwK7Lz6JGOb4zRo6CYo" target="_blank">
         📩 Invite Friends
@@ -159,7 +159,7 @@
         <h3>✏️ Edit Profile</h3>
         <input type="text" id="editFirstName" placeholder="First Name">
         <input type="text" id="editLastName" placeholder="Last Name">
-        <input type="email" id="editEmail" placeholder="Email">
+        <input type="email" id="editEmail" placeholder="Email" disabled>
         <input type="text" id="editPhone" placeholder="Phone">
         <button id="saveProfileBtn" class="btn">💾 Save Changes</button>
         <p id="editStatus" style="color:#ffa502;margin-top:10px;"></p>
@@ -182,25 +182,62 @@
 </footer>
 
 <script>
+// Global object memory placeholder to pass identity fields across elements
+let authenticatedUser = null;
+
+// 1. Core Rule: Intercept execution to lock unlogged access immediately
+function verifySession() {
+  fetch('https://apg-api.vercel.app/api/check-session', { credentials: 'include' })
+    .then(response => {
+      if (response.status === 200) {
+        return response.json();
+      } else {
+        window.location.href = "login.html";
+      }
+    })
+    .then(data => {
+      if (data && data.status === 'authenticated') {
+        authenticatedUser = data.user;
+        // Slide display layout visible once verified
+        document.getElementById("mainWorkspace").style.display = "block";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      window.location.href = "login.html";
+    });
+}
+
+// Fire check on script injection layer activation
+verifySession();
+
+// 2. Production Sign Out Hook
 document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.setItem("isSignedIn", "false");
-  window.location.href = "index.html";
+  fetch('https://apg-api.vercel.app/api/logout', { 
+    method: 'POST', 
+    credentials: 'include' 
+  })
+  .then(() => {
+    window.location.href = "login.html";
+  })
+  .catch(() => {
+    window.location.href = "login.html";
+  });
 });
 
-function loadProfile() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) {
-    document.getElementById("profileInfo").innerText = "❌ No user found";
+// 3. Load dynamic email configurations straight into input fields
+function populateProfileUI() {
+  if (!authenticatedUser) {
+    document.getElementById("profileInfo").innerText = "❌ Session lost. Reload.";
     return;
   }
+  
+  // Renders from database variables
   document.getElementById("profileInfo").innerHTML =
-    "👤 Name: " + user.firstName + " " + user.lastName + "<br>" +
-    "📧 Email: " + user.email + "<br>" +
-    "📱 Phone: " + user.phone;
-  document.getElementById("editFirstName").value = user.firstName;
-  document.getElementById("editLastName").value = user.lastName;
-  document.getElementById("editEmail").value = user.email;
-  document.getElementById("editPhone").value = user.phone;
+    "👤 Authenticated Operative: " + authenticatedUser.email + "<br>" +
+    "🛡️ Status: " + (authenticatedUser.verified ? "✅ Verified Account" : "❌ Suspended Core");
+
+  document.getElementById("editEmail").value = authenticatedUser.email;
 }
 
 document.getElementById("viewProfileBtn").addEventListener("click", () => {
@@ -209,67 +246,47 @@ document.getElementById("viewProfileBtn").addEventListener("click", () => {
     box.style.display = "none";
     document.getElementById("viewProfileBtn").innerText = "👁️ View Profile";
   } else {
-    loadProfile();
+    populateProfileUI();
     box.style.display = "block";
     document.getElementById("viewProfileBtn").innerText = "🙈 Hide Profile";
   }
 });
 
-document.getElementById("saveProfileBtn").addEventListener("click", () => {
-  const firstName = document.getElementById("editFirstName").value.trim();
-  const lastName = document.getElementById("editLastName").value.trim();
-  const email = document.getElementById("editEmail").value.trim();
-  const phone = document.getElementById("editPhone").value.trim();
-  const status = document.getElementById("editStatus");
-  if (!firstName || !lastName || !email || !phone) {
-    status.innerText = "❌ Please fill all fields.";
-    return;
-  }
-  const updatedUser = { firstName, lastName, email, phone };
-  localStorage.setItem("user", JSON.stringify(updatedUser));
-  status.innerText = "✅ Profile updated!";
-  loadProfile();
-});
-
+// 4. Submit custom webpage request variables over WhatsApp
 document.getElementById("Btn").addEventListener("click", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
   const prompt = document.getElementById("Prompt").value.trim();
   const status = document.getElementById("Status");
-  if (!user) return status.innerText = "❌ No account found";
-  if (!prompt) return status.innerText = "❌ Write your request";
+  
+  if (!authenticatedUser) return status.innerText = "❌ Error: Session unauthorized.";
+  if (!prompt) return status.innerText = "❌ Error: Content payload is blank.";
+  
   const msg =
-    "👤 " + user.firstName + " " + user.lastName + "\n" +
-    "📧 " + user.email + "\n" +
-    "📱 " + user.phone + "\n\n" +
-    "🖥️ " + prompt;
+    "👤 Identity Node: " + authenticatedUser.email + "\n\n" +
+    "🖥️ Custom Prompt: " + prompt;
+    
   const url = "https://wa.me/201110433394?text=" + encodeURIComponent(msg);
   window.open(url, "_blank");
-  status.innerText = "✅ Sent!";
+  status.innerText = "✅ Action forwarded to WhatsApp!";
 });
 
+// 5. Submit Weekly Challenge logs
 document.getElementById("challengeBtn").addEventListener("click", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
   const text = document.getElementById("challengeText").value.trim();
   const status = document.getElementById("challengeStatus");
 
-  if (!user) {
-    status.innerText = "❌ No account";
-    return;
-  }
-  if (!text) {
-    status.innerText = "❌ Write something";
-    return;
-  }
+  if (!authenticatedUser) return status.innerText = "❌ Error: Session unauthorized.";
+  if (!text) return status.innerText = "❌ Error: Request body empty.";
 
   const msg =
-    "👤 " + user.firstName + " " + user.lastName + "\n" +
-    "📧 " + user.email + "\n" +
-    "📱 " + user.phone + "\n\n" +
-    "🎯 " + text + "\n" +
-    "[Reminder: Please attach any files manually in WhatsApp]";
+    "👤 Contender identity: " + authenticatedUser.email + "\n\n" +
+    "🎯 Submission Proof: " + text + "\n\n" +
+    "[Note: Attach game screenshots manually in the WhatsApp view card]";
 
   const url = "https://wa.me/201144604623?text=" + encodeURIComponent(msg);
   window.open(url, "_blank");
-
-  status.innerText = "✅ Sent!";
+  status.innerText = "✅ Match verification submitted!";
 });
+</script>
+</body>
+</html>
+
