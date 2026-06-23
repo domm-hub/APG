@@ -6,6 +6,12 @@
   <title>AllProGamerz — Dashboard</title>
   <link rel="icon" href="photo.png">
   <link rel="stylesheet" href="styles/dashboard.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .prompt-cell { max-width: 300px; white-space: pre-wrap; }
+  </style>
 </head>
 <body>
 
@@ -21,7 +27,7 @@
   <a href="#profile">Profile</a>
   <a href="#request">Request</a>
   <a href="#contact">Contact</a>
-  <a href="admin.html" id="adminNavLink" style="display:none;">Admin</a>
+  <a href="#adminPanel" id="adminNavLink" style="display:none;">Admin</a>
 </div>
 
 <div id="mainWorkspace" class="container" style="display: none;">
@@ -73,6 +79,18 @@
         <button class="btn btn-primary" id="saveProfileBtn">Save</button>
         <p class="status" id="editStatus"></p>
       </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <button class="btn btn-ghost" id="showAdminClaimBtn" style="font-size:12px;color:var(--text-muted);">Get admin</button>
+        <div id="adminClaimSection" style="display:none;margin-top:12px;">
+          <div class="form-group">
+            <label>Admin password</label>
+            <input type="password" id="adminPassInput" placeholder="Enter APG@16352 password">
+          </div>
+          <button class="btn btn-primary" id="claimAdminBtn">Claim admin</button>
+          <p class="status" id="adminClaimStatus"></p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -84,6 +102,12 @@
     </div>
     <button class="btn btn-primary" id="Btn">Submit</button>
     <p class="status" id="Status"></p>
+    <div id="requestsList" style="margin-top:16px;"></div>
+  </section>
+
+  <section id="adminPanel" style="display:none;">
+    <h2>All requests</h2>
+    <div id="adminRequestsList"></div>
   </section>
 
   <section id="contact">
@@ -112,6 +136,8 @@ function verifySession() {
         document.getElementById('mainWorkspace').style.display = 'block';
         if (data.user.is_admin) {
           document.getElementById('adminNavLink').style.display = '';
+          document.getElementById('adminPanel').style.display = '';
+          loadAdminRequests();
         }
       }
     })
@@ -126,10 +152,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 });
 
 function populateProfileUI() {
-  if (!authenticatedUser) {
-    document.getElementById('profileInfo').innerText = 'Session lost.';
-    return;
-  }
+  if (!authenticatedUser) { document.getElementById('profileInfo').innerText = 'Session lost.'; return; }
   document.getElementById('profileInfo').innerHTML =
     'Email: ' + authenticatedUser.email + '<br>' +
     'Verified: ' + (authenticatedUser.verified ? 'yes' : 'no');
@@ -148,6 +171,29 @@ document.getElementById('viewProfileBtn').addEventListener('click', () => {
   }
 });
 
+document.getElementById('showAdminClaimBtn').addEventListener('click', () => {
+  const box = document.getElementById('adminClaimSection');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('claimAdminBtn').addEventListener('click', () => {
+  const password = document.getElementById('adminPassInput').value;
+  const s = document.getElementById('adminClaimStatus');
+  if (!password) { s.innerText = 'Enter password.'; return; }
+  s.innerText = 'Checking...';
+  fetch('https://apg-api.vercel.app/api/claim-admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ password })
+  })
+  .then(r => r.json())
+  .then(d => {
+    s.innerText = d.message;
+    if (d.status === 'success') { setTimeout(() => location.reload(), 1000); }
+  })
+  .catch(() => { s.innerText = 'Network error.'; });
+});
+
 document.getElementById('saveProfileBtn').addEventListener('click', () => {
   const fn = document.getElementById('editFirstName').value.trim();
   const ln = document.getElementById('editLastName').value.trim();
@@ -160,8 +206,6 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
 document.getElementById('Btn').addEventListener('click', () => {
   const prompt = document.getElementById('Prompt').value.trim();
   const s = document.getElementById('Status');
-  const token = sessionStorage.getItem('token');
-  if (!token) { s.innerText = 'Not logged in.'; return; }
   if (!prompt) { s.innerText = 'Write something.'; return; }
   fetch('https://apg-api.vercel.app/api/requests', {
     method: 'POST',
@@ -169,7 +213,11 @@ document.getElementById('Btn').addEventListener('click', () => {
     body: JSON.stringify({ prompt })
   })
   .then(r => r.json())
-  .then(d => { s.innerText = d.message; })
+  .then(d => {
+    s.innerText = d.message;
+    document.getElementById('Prompt').value = '';
+    loadMyRequests();
+  })
   .catch(() => { s.innerText = 'Network error.'; });
 });
 
@@ -178,47 +226,46 @@ document.getElementById('challengeBtn').addEventListener('click', () => {
   const s = document.getElementById('challengeStatus');
   if (!authenticatedUser) { s.innerText = 'Not logged in.'; return; }
   if (!text) { s.innerText = 'Write something.'; return; }
-  window.open('https://wa.me' + encodeURIComponent(authenticatedUser.email + '\n\n' + text), '_blank');
+  window.open('https://wa.me?text=' + encodeURIComponent(authenticatedUser.email + '\n\n' + text), '_blank');
   s.innerText = 'Opened WhatsApp.';
 });
-  document.getElementById('challengeBtn').addEventListener('click', () => {
-  const text = document.getElementById('challengeText').value.trim();
-  const s = document.getElementById('challengeStatus');
 
-  if (!authenticatedUser) {
-    s.innerText = 'Not logged in.';
-    return;
-  }
-  if (!text) {
-    s.innerText = 'Write something.';
-    return;
-  }
+function loadMyRequests() {
+  fetch('https://apg-api.vercel.app/api/requests', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+    .then(r => r.json())
+    .then(data => {
+      const wrap = document.getElementById('requestsList');
+      if (!data.length) { wrap.innerHTML = ''; return; }
+      let html = '<h3 style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Your requests</h3>';
+      html += '<table><thead><tr><th>Date</th><th>Prompt</th></tr></thead><tbody>';
+      data.forEach(r => {
+        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td class="prompt-cell">' + r.prompt + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    });
+}
 
-  
-  let phone = authenticatedUser.phone ? authenticatedUser.phone.trim() : "";
-  if (!phone.startsWith("+20")) {
-    if (/^0\d{9}$/.test(phone)) {
-      phone = "+2" + phone.substring(1);
-    } else {
-      phone = "+2" + phone;
-    }
-  }
+function loadAdminRequests() {
+  fetch('https://apg-api.vercel.app/api/requests', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+    .then(r => r.json())
+    .then(data => {
+      const wrap = document.getElementById('adminRequestsList');
+      if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:14px;">No requests yet.</p>'; return; }
+      let html = '<table><thead><tr><th>Date</th><th>Email</th><th>Prompt</th></tr></thead><tbody>';
+      data.forEach(r => {
+        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + r.email + '</td><td class="prompt-cell">' + r.prompt + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    });
+}
 
-  const phoneRegex = /^\+20\d{10}$/;
-  if (!phoneRegex.test(phone)) {
-    s.innerText = "❌ Invalid phone number. Please update your profile.";
-    return;
-  }
-
-  const message = `${authenticatedUser.firstName} ${authenticatedUser.lastName}\n${authenticatedUser.email}\n${phone}\n${text}`;
-
-  const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/201144604623?text=${encodedMessage}`;
-  window.open(whatsappUrl, "_blank");
-
-  s.innerText = 'Challenge info sent!';
-});
-
+loadMyRequests();
 </script>
 
 </body>
