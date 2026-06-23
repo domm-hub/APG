@@ -196,7 +196,22 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
   s.innerText = 'Saved.';
 });
 
-document.getElementById('Btn').addEventListener('click', () => {
+document.getElementById('challengeBtn').addEventListener('click', () => {
+  const text = document.getElementById('challengeText').value.trim();
+  const s = document.getElementById('challengeStatus');
+  if (!text) { s.innerText = 'Write something.'; return; }
+  fetch('https://apg-api.vercel.app/api/requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ prompt: '[Challenge] ' + text })
+  })
+  .then(r => r.json())
+  .then(d => {
+    s.innerText = d.message;
+    if (d.status === 'success') document.getElementById('challengeText').value = '';
+  })
+  .catch(() => { s.innerText = 'Network error.'; });
+});
   const prompt = document.getElementById('Prompt').value.trim();
   const s = document.getElementById('Status');
   if (!prompt) { s.innerText = 'Write something.'; return; }
