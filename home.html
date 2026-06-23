@@ -27,7 +27,7 @@
   <a href="#profile">Profile</a>
   <a href="#request">Request</a>
   <a href="#contact">Contact</a>
-  <a href="#adminPanel" id="adminNavLink" style="display:none;">Admin</a>
+  <a href="admin.html" id="adminNavLink" style="display:none;">Admin</a>
 </div>
 
 <div id="mainWorkspace" class="container" style="display: none;">
@@ -105,21 +105,6 @@
     <div id="requestsList" style="margin-top:16px;"></div>
   </section>
 
-  <section id="adminPanel" style="display:none;">
-    <h2>Admin</h2>
-    <div id="adminStats" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;"></div>
-    <div style="margin-bottom:16px;">
-      <button class="btn btn-ghost" onclick="showAdminTab('stats')">Stats</button>
-      <button class="btn btn-ghost" onclick="showAdminTab('users')">Users</button>
-      <button class="btn btn-ghost" onclick="showAdminTab('requests')">Requests</button>
-      <button class="btn btn-ghost" onclick="showAdminTab('danger')" style="color:var(--danger);">Danger</button>
-    </div>
-    <div id="adminStatsTab"></div>
-    <div id="adminUsersTab" style="display:none;"></div>
-    <div id="adminRequestsTab" style="display:none;"></div>
-    <div id="adminDangerTab" style="display:none;"></div>
-  </section>
-
   <section id="contact">
     <h2>Contact</h2>
     <a class="btn btn-ghost" href="https://wa.me" target="_blank">WhatsApp</a>
@@ -146,10 +131,6 @@ function verifySession() {
         document.getElementById('mainWorkspace').style.display = 'block';
         if (data.user.is_admin) {
           document.getElementById('adminNavLink').style.display = '';
-          document.getElementById('adminPanel').style.display = '';
-          loadAdminStats();
-          loadAdminRequests();
-          loadAdminUsers();
         }
       }
     })
@@ -232,156 +213,6 @@ document.getElementById('Btn').addEventListener('click', () => {
   })
   .catch(() => { s.innerText = 'Network error.'; });
 });
-
-document.getElementById('challengeBtn').addEventListener('click', () => {
-  const text = document.getElementById('challengeText').value.trim();
-  const s = document.getElementById('challengeStatus');
-  if (!authenticatedUser) { s.innerText = 'Not logged in.'; return; }
-  if (!text) { s.innerText = 'Write something.'; return; }
-  window.open('https://wa.me?text=' + encodeURIComponent(authenticatedUser.email + '\n\n' + text), '_blank');
-  s.innerText = 'Opened WhatsApp.';
-});
-
-function loadMyRequests() {
-  fetch('https://apg-api.vercel.app/api/requests', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-    .then(r => r.json())
-    .then(data => {
-      const wrap = document.getElementById('requestsList');
-      if (!data.length) { wrap.innerHTML = ''; return; }
-      let html = '<h3 style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Your requests</h3>';
-      html += '<table><thead><tr><th>Date</th><th>Prompt</th><th>Status</th></tr></thead><tbody>';
-      data.forEach(r => {
-        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    });
-}
-
-let adminCurrentTab = 'stats';
-
-function showAdminTab(tab) {
-  adminCurrentTab = tab;
-  ['adminStatsTab','adminUsersTab','adminRequestsTab','adminDangerTab'].forEach(id => {
-    document.getElementById(id).style.display = id === 'admin' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Tab' ? 'block' : 'none';
-  });
-}
-
-function loadAdminStats() {
-  fetch('https://apg-api.vercel.app/api/admin/stats', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-    .then(r => r.json())
-    .then(d => {
-      const wrap = document.getElementById('adminStats');
-      wrap.innerHTML = '';
-      const cards = [
-        { label: 'Total users', value: d.total_users },
-        { label: 'Verified', value: d.verified_users },
-        { label: 'Admins', value: d.admin_users },
-        { label: 'Requests', value: d.total_requests },
-        { label: 'Pending', value: d.pending_requests },
-      ];
-      cards.forEach(c => {
-        wrap.innerHTML += '<div style="background:var(--surface);padding:12px 18px;border-radius:8px;min-width:100px;"><div style="font-size:22px;font-weight:700;">' + c.value + '</div><div style="font-size:12px;color:var(--text-muted);">' + c.label + '</div></div>';
-      });
-      document.getElementById('adminStatsTab').innerHTML = '';
-    });
-}
-
-function loadAdminUsers() {
-  fetch('https://apg-api.vercel.app/api/admin/users', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-    .then(r => r.json())
-    .then(data => {
-      const wrap = document.getElementById('adminUsersTab');
-      if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No users.</p>'; return; }
-      let html = '<table><thead><tr><th>Email</th><th>Verified</th><th>Admin</th></tr></thead><tbody>';
-      data.forEach(u => {
-        html += '<tr><td>' + u.email + '</td><td>' + (u.verified ? 'yes' : 'no') + '</td><td>' + (u.is_admin ? 'yes' : 'no') + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    });
-}
-
-function loadAdminRequests() {
-  fetch('https://apg-api.vercel.app/api/admin/requests', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-    .then(r => r.json())
-    .then(data => {
-      const wrap = document.getElementById('adminRequestsTab');
-      if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:14px;">No requests yet.</p>'; return; }
-      let html = '<table><thead><tr><th>Date</th><th>Email</th><th>Prompt</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-      data.forEach(r => {
-        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + r.email + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td>' +
-          '<td>' +
-          (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="adminAccept(' + r.id + ')">Accept</button> ' : '') +
-          (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="adminReject(' + r.id + ')">Reject</button> ' : '') +
-          '<button class="btn btn-ghost" onclick="adminDeleteReq(' + r.id + ')" style="color:var(--danger);">Delete</button>' +
-          '</td></tr>';
-      });
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
-    });
-}
-
-function adminAccept(id) {
-  fetch('https://apg-api.vercel.app/api/admin/requests/' + id + '/status', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ status: 'accepted' })
-  })
-  .then(r => r.json())
-  .then(d => { alert(d.message); loadAdminRequests(); });
-}
-
-function adminReject(id) {
-  fetch('https://apg-api.vercel.app/api/admin/requests/' + id + '/status', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ status: 'rejected' })
-  })
-  .then(r => r.json())
-  .then(d => { alert(d.message); loadAdminRequests(); });
-}
-
-function adminDeleteReq(id) {
-  if (!confirm('Delete this request?')) return;
-  fetch('https://apg-api.vercel.app/api/admin/requests/' + id, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  .then(r => r.json())
-  .then(d => { alert(d.message); loadAdminRequests(); });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const wrap = document.getElementById('adminDangerTab');
-  wrap.innerHTML = '<h3 style="color:var(--danger);">Danger zone</h3>' +
-    '<button class="btn btn-danger" onclick="adminCleanup()">Delete everything (users + requests)</button>' +
-    '<p class="status" id="cleanupStatus"></p>';
-});
-
-function adminCleanup() {
-  if (!confirm('ARE YOU SURE? This deletes ALL users and ALL requests!')) return;
-  if (!confirm('Last chance — this cannot be undone!')) return;
-  const s = document.getElementById('cleanupStatus');
-  s.innerText = 'Deleting...';
-  fetch('https://apg-api.vercel.app/api/admin/cleanup', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  .then(r => r.json())
-  .then(d => {
-    s.innerText = d.message;
-    if (d.status === 'success') setTimeout(() => location.reload(), 1500);
-  });
-}
 
 loadMyRequests();
 </script>
