@@ -212,6 +212,8 @@ document.getElementById('challengeBtn').addEventListener('click', () => {
   })
   .catch(() => { s.innerText = 'Network error.'; });
 });
+
+document.getElementById('Btn').addEventListener('click', () => {
   const prompt = document.getElementById('Prompt').value.trim();
   const s = document.getElementById('Status');
   if (!prompt) { s.innerText = 'Write something.'; return; }
