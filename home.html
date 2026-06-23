@@ -21,6 +21,7 @@
   <a href="#profile">Profile</a>
   <a href="#request">Request</a>
   <a href="#contact">Contact</a>
+  <a href="admin.html" id="adminNavLink" style="display:none;">Admin</a>
 </div>
 
 <div id="mainWorkspace" class="container" style="display: none;">
@@ -109,6 +110,9 @@ function verifySession() {
       if (data && data.status === 'authenticated') {
         authenticatedUser = data.user;
         document.getElementById('mainWorkspace').style.display = 'block';
+        if (data.user.is_admin) {
+          document.getElementById('adminNavLink').style.display = '';
+        }
       }
     })
     .catch(() => { window.location.href = 'login.html'; });

@@ -19,34 +19,33 @@
   </header>
 
   <div class="container">
-    <div style="display:flex;gap:10px;margin-bottom:20px;">
-      <input type="password" id="masterInput" placeholder="Master password" style="max-width:250px;">
-      <button class="btn btn-primary" id="loadBtn">Load requests</button>
-    </div>
     <p class="status" id="statusMsg"></p>
     <div id="tableWrap"></div>
   </div>
 
   <script>
-    document.getElementById('loadBtn').addEventListener('click', () => {
-      const master = document.getElementById('masterInput').value;
-      const s = document.getElementById('statusMsg');
-      const wrap = document.getElementById('tableWrap');
-      s.innerText = 'Loading...';
-      fetch('https://apg-api.vercel.app/api/requests?master=' + encodeURIComponent(master))
-        .then(r => { if (!r.ok) throw new Error('Wrong password'); return r.json(); })
-        .then(data => {
-          s.innerText = data.length + ' requests';
-          if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No requests yet.</p>'; return; }
-          let html = '<table><thead><tr><th>Date</th><th>Email</th><th>Prompt</th></tr></thead><tbody>';
-          data.forEach(r => {
-            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + r.email + '</td><td class="prompt-cell">' + r.prompt + '</td></tr>';
-          });
-          html += '</tbody></table>';
-          wrap.innerHTML = html;
-        })
-        .catch(e => { s.innerText = e.message; wrap.innerHTML = ''; });
-    });
+    const token = sessionStorage.getItem('token');
+    if (!token) { window.location.href = 'login.html'; }
+
+    const s = document.getElementById('statusMsg');
+    const wrap = document.getElementById('tableWrap');
+    s.innerText = 'Loading...';
+
+    fetch('https://apg-api.vercel.app/api/requests', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(r => { if (!r.ok) throw new Error('Not authorized'); return r.json(); })
+    .then(data => {
+      s.innerText = data.length + ' requests';
+      if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No requests yet.</p>'; return; }
+      let html = '<table><thead><tr><th>Date</th><th>Email</th><th>Prompt</th></tr></thead><tbody>';
+      data.forEach(r => {
+        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + r.email + '</td><td class="prompt-cell">' + r.prompt + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    })
+    .catch(e => { s.innerText = e.message; wrap.innerHTML = ''; });
   </script>
 </body>
 </html>
