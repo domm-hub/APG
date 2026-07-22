@@ -81,6 +81,14 @@
           <label>Phone</label>
           <input type="text" id="editPhone" placeholder="Phone">
         </div>
+        <div class="form-group">
+          <label>Current password (required to change password)</label>
+          <input type="password" id="editCurrentPass" placeholder="Current password">
+        </div>
+        <div class="form-group">
+          <label>New password (leave blank to keep current)</label>
+          <input type="password" id="editNewPass" placeholder="New password">
+        </div>
         <button class="btn btn-primary" id="saveProfileBtn">Save</button>
         <p class="status" id="editStatus"></p>
       </div>
@@ -220,14 +228,18 @@ document.getElementById('claimAdminBtn').addEventListener('click', () => {
 document.getElementById('saveProfileBtn').addEventListener('click', () => {
   const fn = document.getElementById('editFirstName').value.trim();
   const ln = document.getElementById('editLastName').value.trim();
-  const ph = document.getElementById('editPhone').value.trim();
+  const curPass = document.getElementById('editCurrentPass').value;
+  const newPass = document.getElementById('editNewPass').value;
   const s = document.getElementById('editStatus');
-  if (!fn || !ln || !ph) { s.innerText = 'Fill all fields.'; return; }
+  if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
+  if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
   s.innerText = 'Saving...';
+  const body = { firstName: fn, lastName: ln };
+  if (newPass) { body.current_password = curPass; body.new_password = newPass; }
   fetch('https://apg-api.vercel.app/api/update-profile', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ firstName: fn, lastName: ln, phone: ph })
+    body: JSON.stringify(body)
   })
   .then(r => r.json())
   .then(d => {
@@ -239,6 +251,8 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
       if (fn && ln) {
         document.getElementById('nameReminder').style.display = 'none';
       }
+      document.getElementById('editCurrentPass').value = '';
+      document.getElementById('editNewPass').value = '';
       populateProfileUI();
     }
   })
