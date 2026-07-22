@@ -230,7 +230,7 @@ document.getElementById('challengeBtn').addEventListener('click', () => {
   })
   .then(r => r.json())
   .then(d => {
-    s.innerText = d.message;
+    s.innerText = d.roast || d.message;
     if (d.status === 'success') document.getElementById('challengeText').value = '';
   })
   .catch(() => { s.innerText = 'Network error.'; });
@@ -247,8 +247,8 @@ document.getElementById('Btn').addEventListener('click', () => {
   })
   .then(r => r.json())
   .then(d => {
-    s.innerText = d.message;
-    document.getElementById('Prompt').value = '';
+    s.innerText = d.roast || d.message;
+    if (d.status === 'success') document.getElementById('Prompt').value = '';
     loadMyRequests();
   })
   .catch(() => { s.innerText = 'Network error.'; });
