@@ -111,9 +111,10 @@
           const wrap = document.getElementById('adminUsers');
           if (data.status === 'error') { wrap.innerHTML = '<p>' + data.message + '</p>'; return; }
           if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No users.</p>'; return; }
-          let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Admin</th></tr></thead><tbody>';
+          let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Admin</th><th>Action</th></tr></thead><tbody>';
           data.forEach(u => {
-            html += '<tr><td>' + (u.firstName || '') + ' ' + (u.lastName || '') + '</td><td>' + u.email + '</td><td>' + (u.verified ? 'yes' : 'no') + '</td><td>' + (u.is_admin ? 'yes' : 'no') + '</td></tr>';
+            html += '<tr><td>' + (u.firstName || '') + ' ' + (u.lastName || '') + '</td><td>' + u.email + '</td><td>' + (u.verified ? 'yes' : 'no') + '</td><td>' + (u.is_admin ? 'yes' : 'no') + '</td>' +
+              '<td>' + (u.is_admin ? '' : '<button class="btn btn-ghost" onclick="deleteUser(\'' + u.email + '\')" style="color:var(--accent);">Delete</button>') + '</td></tr>';
           });
           html += '</tbody></table>';
           wrap.innerHTML = html;
@@ -173,6 +174,16 @@
       })
       .then(r => r.json())
       .then(d => { s.innerText = d.message; loadRequests(); });
+    }
+
+    function deleteUser(email) {
+      if (!confirm('Delete user ' + email + '?')) return;
+      fetch('https://apg-api.vercel.app/api/admin/users/' + encodeURIComponent(email), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(d => { s.innerText = d.message; loadUsers(); loadStats(); });
     }
 
     function cleanupAll() {
