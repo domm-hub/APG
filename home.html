@@ -147,9 +147,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 function populateProfileUI() {
   if (!authenticatedUser) { document.getElementById('profileInfo').innerText = 'Session lost.'; return; }
   document.getElementById('profileInfo').innerHTML =
+    'Name: ' + (authenticatedUser.firstName || '') + ' ' + (authenticatedUser.lastName || '') + '<br>' +
     'Email: ' + authenticatedUser.email + '<br>' +
     'Verified: ' + (authenticatedUser.verified ? 'yes' : 'no');
   document.getElementById('editEmail').value = authenticatedUser.email;
+  document.getElementById('editFirstName').value = authenticatedUser.firstName || '';
+  document.getElementById('editLastName').value = authenticatedUser.lastName || '';
 }
 
 function loadMyRequests() {
