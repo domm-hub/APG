@@ -223,12 +223,26 @@ document.getElementById('saveProfileBtn').addEventListener('click', () => {
   const ph = document.getElementById('editPhone').value.trim();
   const s = document.getElementById('editStatus');
   if (!fn || !ln || !ph) { s.innerText = 'Fill all fields.'; return; }
-  s.innerText = 'Saved.';
-  authenticatedUser.firstName = fn;
-  authenticatedUser.lastName = ln;
-  if (fn && ln) {
-    document.getElementById('nameReminder').style.display = 'none';
-  }
+  s.innerText = 'Saving...';
+  fetch('https://apg-api.vercel.app/api/update-profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ firstName: fn, lastName: ln, phone: ph })
+  })
+  .then(r => r.json())
+  .then(d => {
+    s.innerText = d.message;
+    if (d.status === 'success') {
+      authenticatedUser.firstName = fn;
+      authenticatedUser.lastName = ln;
+      document.getElementById('greeting').innerText = 'Hello ' + fn + '!';
+      if (fn && ln) {
+        document.getElementById('nameReminder').style.display = 'none';
+      }
+      populateProfileUI();
+    }
+  })
+  .catch(() => { s.innerText = 'Network error.'; });
 });
 
 document.getElementById('challengeBtn').addEventListener('click', () => {
