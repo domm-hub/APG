@@ -15,9 +15,10 @@
 </head>
 <body>
 
-<header>
-  <h1>AP<span>G</span></h1>
-  <button class="btn btn-danger" id="logoutBtn">Sign out</button>
+  <header>
+    <h1>AP<span>G</span></h1>
+    <p id="greeting" style="font-size:14px;color:var(--text-muted);font-weight:400;"></p>
+    <button class="btn btn-danger" id="logoutBtn">Sign out</button>
 </header>
 
 <div class="nav-bar">
@@ -129,6 +130,7 @@ function verifySession() {
       if (data && data.status === 'authenticated') {
         authenticatedUser = data.user;
         document.getElementById('mainWorkspace').style.display = 'block';
+        document.getElementById('greeting').innerText = 'Hello ' + (data.user.firstName || '') + '!';
         if (data.user.is_admin) {
           document.getElementById('adminNavLink').style.display = '';
         }
