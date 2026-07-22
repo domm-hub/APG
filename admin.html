@@ -129,10 +129,11 @@
           const wrap = document.getElementById('adminRequestsList');
           if (data.status === 'error') { wrap.innerHTML = '<p>' + data.message + '</p>'; return; }
           if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No requests yet.</p>'; return; }
-          let html = '<table><thead><tr><th>Date</th><th>Email</th><th>Creator</th><th>Prompt</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+          let html = '<table><thead><tr><th>Date</th><th>Type</th><th>Email</th><th>Creator</th><th>Prompt</th><th>Status</th><th>Action</th></tr></thead><tbody>';
           data.forEach(r => {
             const creator = r.creator_name || r.creator_email || '—';
-            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + r.email + '</td><td>' + creator + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td>' +
+            const typeLabel = r.type === 'challenge' ? 'Challenge' : 'Request';
+            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + typeLabel + '</td><td>' + r.email + '</td><td>' + creator + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td>' +
               '<td>' +
               (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="acceptReq(' + r.id + ')">Accept</button> ' : '') +
               (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="rejectReq(' + r.id + ')">Reject</button> ' : '') +
