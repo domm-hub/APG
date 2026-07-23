@@ -10,9 +10,13 @@ document.getElementById("signupBtn").addEventListener("click", () => {
     password: document.getElementById("password").value
   };
 
+    if (length(password) < 8){
+    status.innerText = "Password is too short. 8+ chars minimum."
+  }
+
   status.innerText = "⏳ Creating account...";
 
-  // 2. Fire the network request across the internet to Vercel
+  // 2. Fire the network request across the interne to Vercel
   fetch('https://apg-api.vercel.app/api/signup', {
     method: 'POST',
     headers: {

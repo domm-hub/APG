@@ -5,6 +5,7 @@ signinBtn.addEventListener("click", () => {
   const emailVal = document.getElementById("email").value.trim();
   const passwordVal = document.getElementById("password").value;
 
+
   if (!emailVal || !passwordVal) {
     status.innerText = "Please enter both email and password.";
     return;
@@ -22,7 +23,10 @@ signinBtn.addEventListener("click", () => {
     if (data.status === 'success') {
       sessionStorage.setItem('token', data.token);
       setTimeout(() => { window.location.href = 'home.html'; }, 200);
-    } else {
+    } else if (data.action == "verify"){
+      setTimeout(() => { window.location.href = 'verify.html'; }, 200);
+    }
+    else {
       status.innerText = data.message;
     }
   })
