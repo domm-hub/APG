@@ -27,6 +27,7 @@ header {
   border-bottom: 1px solid var(--border);
   padding: 20px 24px;
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
@@ -132,6 +133,7 @@ section h2 {
 /* ─── TAB BAR ─── */
 .tab-bar {
   display: flex;
+  flex: 0 0 auto;
   gap: 2px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
