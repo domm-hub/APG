@@ -204,6 +204,7 @@ section h2 {
 
 .tab-panel iframe {
   width: 100%;
+  height: 100%;
   border: none;
   flex: 1;
   min-height: calc(100vh - 160px);
