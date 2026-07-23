@@ -101,6 +101,7 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .container {
@@ -249,7 +250,6 @@ label {
 
 /* ─── PROFILE ─── */
 #profileSection {
-  display: none;
   padding-top: 12px;
 }
 
