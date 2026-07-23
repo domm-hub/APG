@@ -306,6 +306,71 @@ section h2 {
   color: var(--text-muted);
 }
 
+.tab-content-admin table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.tab-content-admin th,
+.tab-content-admin td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-content-admin th {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tab-content-admin .prompt-cell {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tab-content-admin .stats {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tab-content-admin .stat-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 18px;
+  background: var(--surface);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.tab-content-admin .stat-card .num {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.tab-content-admin .stat-card .label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.tab-content-admin .admin-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab-content-admin .table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* ─── FORM ELEMENTS ─── */
 input, textarea, select {
   display: block;
@@ -412,6 +477,34 @@ footer {
   .tab-content th,
   .tab-content td {
     padding: 6px 8px;
+  }
+
+  .tab-content-admin .stats {
+    gap: 8px;
+  }
+
+  .tab-content-admin .stat-card {
+    min-width: 0;
+    padding: 10px 14px;
+  }
+
+  .tab-content-admin .stat-card .num {
+    font-size: 18px;
+  }
+
+  .tab-content-admin .admin-tab-bar .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .tab-content-admin table {
+    font-size: 13px;
+  }
+
+  .tab-content-admin .table-wrap table {
+    min-width: 500px;
   }
   .btn {
     padding: 8px 14px;
