@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Request</title>
   <link rel="icon" href="../photo.png">
   <link rel="stylesheet" href="../styles/dashboard.css">
@@ -9,7 +10,14 @@
     table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
     th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
     th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
-    .prompt-cell { max-width: 300px; white-space: pre-wrap; }
+    .prompt-cell { white-space: pre-wrap; word-break: break-word; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 600px) {
+      body { padding: 14px; }
+      table { font-size: 13px; }
+      th, td { padding: 6px 8px; }
+      .table-wrap table { min-width: 450px; }
+    }
   </style>
 </head>
 <body>
@@ -21,7 +29,7 @@
     </div>
     <button class="btn btn-primary" id="Btn">Submit</button>
     <p class="status" id="Status"></p>
-    <div id="requestsList" style="margin-top:16px;"></div>
+    <div id="requestsList" style="margin-top:16px;" class="table-wrap"></div>
   </div>
 
   <script src="/scripts/SubTab.js"></script>

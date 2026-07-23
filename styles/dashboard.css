@@ -94,11 +94,25 @@ header h1 span {
 }
 
 /* ─── LAYOUT ─── */
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 .container {
-  max-width: 800px;
   margin: 0 auto;
   padding: 24px 20px 60px;
-  min-height: calc(100vh - 130px);
+}
+
+#mainWorkspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 section {
@@ -121,6 +135,7 @@ section h2 {
   padding: 0 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
 .tab-bar::-webkit-scrollbar {
@@ -148,30 +163,32 @@ section h2 {
   color: var(--text);
 }
 
-.tab.active::after {
-  content: '';
+.tab-indicator {
   position: absolute;
   bottom: 0;
-  left: 12px;
-  right: 12px;
   height: 2px;
   background: var(--accent);
   border-radius: 2px 2px 0 0;
+  transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
 }
 
 /* ─── TAB PANELS ─── */
 .tab-panel {
   display: none;
   opacity: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .tab-panel.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
   animation: tabIn .3s cubic-bezier(.4,0,.2,1) forwards;
 }
 
 .tab-panel.exiting {
-  display: block;
+  display: flex;
+  flex-direction: column;
   animation: tabOut .2s cubic-bezier(.4,0,.2,1) forwards;
 }
 
@@ -188,7 +205,8 @@ section h2 {
 .tab-panel iframe {
   width: 100%;
   border: none;
-  min-height: 400px;
+  flex: 1;
+  min-height: calc(100vh - 160px);
 }
 
 /* ─── FORM ELEMENTS ─── */
@@ -271,10 +289,28 @@ footer {
 /* ─── RESPONSIVE ─── */
 @media (max-width: 600px) {
   header {
-    padding: 16px;
+    padding: 14px 16px;
+  }
+  header h1 {
+    font-size: 16px;
   }
   .container {
     padding: 16px 12px 40px;
+  }
+  .tab-bar {
+    padding: 0 8px;
+    gap: 0;
+  }
+  .tab {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .tab-panel iframe {
+    min-height: calc(100vh - 140px);
+  }
+  .btn {
+    padding: 8px 14px;
+    font-size: 12px;
   }
   section {
     padding: 18px;

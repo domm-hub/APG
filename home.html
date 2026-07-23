@@ -16,6 +16,7 @@
   </header>
 
   <nav class="tab-bar" id="tabBar">
+    <div class="tab-indicator" id="tabIndicator"></div>
     <button class="tab active" data-tab="games">Games</button>
     <button class="tab" data-tab="challenge">Challenge</button>
     <button class="tab" data-tab="prizes">Prizes</button>
@@ -60,16 +61,28 @@
 
     const loaded = {};
     let currentTab = null;
+    const indicator = document.getElementById('tabIndicator');
+
+    function moveIndicator(tab) {
+      if (!tab) return;
+      const rect = tab.getBoundingClientRect();
+      const barRect = document.getElementById('tabBar').getBoundingClientRect();
+      indicator.style.left = (rect.left - barRect.left + document.getElementById('tabBar').scrollLeft) + 'px';
+      indicator.style.width = rect.width + 'px';
+    }
 
     function switchTab(name) {
       if (name === currentTab) return;
 
       const oldPanel = currentTab ? document.getElementById('panel-' + currentTab) : null;
       const newPanel = document.getElementById('panel-' + name);
+      const newBtn = document.querySelector('.tab[data-tab="' + name + '"]');
 
       document.querySelectorAll('.tab').forEach(t =>
         t.classList.toggle('active', t.dataset.tab === name)
       );
+
+      moveIndicator(newBtn);
 
       if (oldPanel) {
         oldPanel.classList.add('exiting');
@@ -131,6 +144,11 @@
 
         const hash = location.hash.slice(1);
         switchTab(hash && tabConfig[hash] ? hash : 'games');
+
+        window.addEventListener('resize', () => {
+          const activeBtn = document.querySelector('.tab.active');
+          moveIndicator(activeBtn);
+        });
       })
       .catch((err) => {
         console.error('[auth] /api/me fetch failed:', err);

@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AllProGamerz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Games</title>
   <link rel="icon" href="../photo.png">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #121212;
       color: #f0f0f0;
       margin: 0;
@@ -56,23 +57,6 @@
       border: none;
       font-size: 16px;
     }
-    .mobile-message {
-      display: none;
-      text-align: center;
-      margin-top: 15px;
-      font-size: 18px;
-      color: #ff4757;
-      font-weight: bold;
-    }
-    /* Hide everything except image + message on mobile */
-    @media (max-width: 768px) {
-      h1, h2, #searchBar, ul, .guide {
-        display: none;
-      }
-      .mobile-message {
-        display: block;
-      }
-    }
     .guide {
       background: #1e1e1e;
       padding: 20px;
@@ -93,18 +77,23 @@
       padding: 0;
       color: #ddd;
     }
+    @media (max-width: 600px) {
+      body { padding: 14px; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; margin-top: 20px; }
+      li { padding: 12px; font-size: 14px; }
+      .note { font-size: 0.85em; }
+      .guide { padding: 16px; }
+    }
   </style>
 </head>
 <body>
   <h1>Game Collection</h1>
 
-  <!-- Image with mobile message -->
   <div style="text-align:center;">
     <img src="../photo.png" alt="Game Banner" style="max-width: 250px; height: auto;">
-    <div class="mobile-message">Mobile version coming Soon</div>
   </div>
 
-  <!-- Search Bar -->
   <input type="text" id="searchBar" placeholder="Search for a game..." onkeyup="searchGames()">
 
   <h2>Direct Download</h2>
@@ -140,11 +129,10 @@
     </li>
   </ul>
 
-  <!-- Torrent Guide Section -->
   <div class="guide">
     <h2>⚡ Torrent Guide</h2>
     <p>Some games will need a <strong>torrent</strong> and will be written with <em>(Torrent Required)</em> next to them.</p>
-    <p>Here is the website for a torrent client: 
+    <p>Here is the website for a torrent client:
       <a href="https://webtorrent.io/" target="_blank">https://webtorrent.io/</a>
     </p>
     <p>Scroll down the website and press <strong>"Get for Desktop"</strong>.</p>
