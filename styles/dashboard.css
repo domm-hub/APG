@@ -104,6 +104,7 @@ body {
 }
 
 .container {
+  width: 100%;
   margin: 0 auto;
   padding: 24px 20px 60px;
 }
@@ -207,7 +208,7 @@ section h2 {
   height: 100%;
   border: none;
   flex: 1;
-  min-height: calc(100vh - 160px);
+  min-height: 0;
 }
 
 /* ─── FORM ELEMENTS ─── */
@@ -307,7 +308,7 @@ footer {
     font-size: 12px;
   }
   .tab-panel iframe {
-    min-height: calc(100vh - 140px);
+    min-height: 0;
   }
   .btn {
     padding: 8px 14px;
