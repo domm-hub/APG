@@ -45,6 +45,7 @@
 
   <script>
     const TOKEN = sessionStorage.getItem('token');
+    console.log('[auth] token from sessionStorage:', TOKEN);
     if (!TOKEN) { location.href = 'login.html'; throw 'no session'; }
 
     const tabConfig = {
@@ -104,12 +105,13 @@
       location.href = 'login.html';
     });
 
-    fetch('https://apg-api.vercel.app/api/me', {
+    fetch('https://apg-api.vercel.app/api/check-session', {
       headers: { 'Authorization': 'Bearer ' + TOKEN }
     })
       .then(r => r.json())
       .then(data => {
-        if (data.status !== 'success') {
+        console.log('[auth] /api/me response:', data);
+        if (data.status !== 'success' && data.status !== 'authenticated') {
           sessionStorage.removeItem('token');
           location.href = 'login.html';
           return;
@@ -123,14 +125,15 @@
         if (!user.firstName || !user.lastName) {
           document.getElementById('nameReminder').style.display = '';
         }
-        if (user.admin) {
+        if (user.is_admin) {
           document.getElementById('adminTab').style.display = '';
         }
 
         const hash = location.hash.slice(1);
         switchTab(hash && tabConfig[hash] ? hash : 'games');
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[auth] /api/me fetch failed:', err);
         sessionStorage.removeItem('token');
         location.href = 'login.html';
       });

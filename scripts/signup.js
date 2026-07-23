@@ -10,8 +10,9 @@ document.getElementById("signupBtn").addEventListener("click", () => {
     password: document.getElementById("password").value
   };
 
-    if (length(password) < 8){
-    status.innerText = "Password is too short. 8+ chars minimum."
+    if (payload.password.length < 8){
+    status.innerText = "Password is too short. 8+ chars minimum.";
+    return;
   }
 
   status.innerText = "⏳ Creating account...";
