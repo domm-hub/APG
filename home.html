@@ -16,7 +16,6 @@
   </header>
 
   <nav class="tab-bar" id="tabBar">
-    <div class="tab-indicator" id="tabIndicator"></div>
     <button class="tab active" data-tab="games">Games</button>
     <button class="tab" data-tab="challenge">Challenge</button>
     <button class="tab" data-tab="prizes">Prizes</button>
@@ -50,39 +49,55 @@
     if (!TOKEN) { location.href = 'login.html'; throw 'no session'; }
 
     const tabConfig = {
-      games:     'SubTabs/Games.html',
-      challenge: 'SubTabs/Challenge.html',
-      prizes:    'SubTabs/Prizes.html',
-      profile:   'SubTabs/Profile.html',
-      request:   'SubTabs/Request.html',
-      contact:   'SubTabs/Contact.html',
-      admin:     'SubTabs/Admin.html'
+      games:     '/SubTabs/Games.html',
+      challenge: '/SubTabs/Challenge.html',
+      prizes:    '/SubTabs/Prizes.html',
+      profile:   '/SubTabs/Profile.html',
+      request:   '/SubTabs/Request.html',
+      contact:   '/SubTabs/Contact.html',
+      admin:     '/SubTabs/Admin.html'
     };
 
-    const loaded = {};
+    const loaded = Object.create(null);
     let currentTab = null;
-    const indicator = document.getElementById('tabIndicator');
 
-    function moveIndicator(tab) {
-      if (!tab) return;
-      const rect = tab.getBoundingClientRect();
-      const barRect = document.getElementById('tabBar').getBoundingClientRect();
-      indicator.style.left = (rect.left - barRect.left + document.getElementById('tabBar').scrollLeft) + 'px';
-      indicator.style.width = rect.width + 'px';
+    async function loadTab(name, panel) {
+      const response = await fetch(tabConfig[name]);
+      if (!response.ok) throw new Error('Unable to load ' + name + ' tab');
+
+      const markup = await response.text();
+      const tabDocument = new DOMParser().parseFromString(markup, 'text/html');
+      const content = document.createElement('div');
+      content.className = 'tab-content tab-content-' + name;
+
+      Array.from(tabDocument.body.childNodes)
+        .filter(node => node.nodeName !== 'SCRIPT')
+        .forEach(node => content.appendChild(document.importNode(node, true)));
+
+      panel.replaceChildren(content);
+
+      tabDocument.querySelectorAll('script:not([src])').forEach(source => {
+        const script = document.createElement('script');
+        script.textContent = source.textContent
+          .replace(/const token\s*=/g, 'var token =')
+          .replace(/function switchTab\s*\(/g, 'function adminSwitchTab(')
+          .replace(/\bswitchTab\(/g, 'adminSwitchTab(');
+        panel.appendChild(script);
+      });
+
+      loaded[name] = true;
     }
 
-    function switchTab(name) {
+    async function switchTab(name) {
       if (name === currentTab) return;
 
       const oldPanel = currentTab ? document.getElementById('panel-' + currentTab) : null;
       const newPanel = document.getElementById('panel-' + name);
-      const newBtn = document.querySelector('.tab[data-tab="' + name + '"]');
+      if (!newPanel) return;
 
       document.querySelectorAll('.tab').forEach(t =>
         t.classList.toggle('active', t.dataset.tab === name)
       );
-
-      moveIndicator(newBtn);
 
       if (oldPanel) {
         oldPanel.classList.add('exiting');
@@ -94,10 +109,12 @@
       newPanel.classList.add('active');
 
       if (!loaded[name] && tabConfig[name]) {
-        const iframe = document.createElement('iframe');
-        iframe.src = tabConfig[name];
-        newPanel.appendChild(iframe);
-        loaded[name] = true;
+        try {
+          await loadTab(name, newPanel);
+        } catch (error) {
+          newPanel.innerHTML = '<div class="tab-content"><p class="status">Unable to load this tab.</p></div>';
+          console.error(error);
+        }
       }
 
       currentTab = name;
@@ -144,11 +161,6 @@
 
         const hash = location.hash.slice(1);
         switchTab(hash && tabConfig[hash] ? hash : 'games');
-
-        window.addEventListener('resize', () => {
-          const activeBtn = document.querySelector('.tab.active');
-          moveIndicator(activeBtn);
-        });
       })
       .catch((err) => {
         console.error('[auth] /api/me fetch failed:', err);
