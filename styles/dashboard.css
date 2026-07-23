@@ -98,6 +98,7 @@ header h1 span {
   max-width: 800px;
   margin: 0 auto;
   padding: 24px 20px 60px;
+  min-height: calc(100vh - 130px);
 }
 
 section {
@@ -162,27 +163,26 @@ section h2 {
 .tab-panel {
   display: none;
   opacity: 0;
-  transform: translateY(12px);
 }
 
 .tab-panel.active {
   display: block;
-  animation: tabIn .25s ease forwards;
+  animation: tabIn .3s cubic-bezier(.4,0,.2,1) forwards;
 }
 
 .tab-panel.exiting {
   display: block;
-  animation: tabOut .15s ease forwards;
+  animation: tabOut .2s cubic-bezier(.4,0,.2,1) forwards;
 }
 
 @keyframes tabIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes tabOut {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-10px) scale(0.98); }
 }
 
 .tab-panel iframe {

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Request</title>
+  <link rel="icon" href="../photo.png">
+  <link rel="stylesheet" href="../styles/dashboard.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .prompt-cell { max-width: 300px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Request a custom website</h2>
+    <div class="form-group">
+      <label for="Prompt">Describe what you want</label>
+      <textarea id="Prompt" rows="4" placeholder="Layout, theme, pages..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="Btn">Submit</button>
+    <p class="status" id="Status"></p>
+    <div id="requestsList" style="margin-top:16px;"></div>
+  </div>
+
+  <script src="/scripts/SubTab.js"></script>
+  <script>
+    const token = sessionStorage.getItem('token');
+
+    function loadMyRequests() {
+      fetch('https://apg-api.vercel.app/api/requests', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(data => {
+          const wrap = document.getElementById('requestsList');
+          if (!data.length) { wrap.innerHTML = ''; return; }
+          let html = '<h3 style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Your requests</h3>';
+          html += '<table><thead><tr><th>Date</th><th>Type</th><th>Prompt</th><th>Status</th></tr></thead><tbody>';
+          data.forEach(r => {
+            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + (r.type === 'challenge' ? 'Challenge' : 'Request') + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          wrap.innerHTML = html;
+        });
+    }
+
+    document.getElementById('Btn').addEventListener('click', () => {
+      const prompt = document.getElementById('Prompt').value.trim();
+      const s = document.getElementById('Status');
+      if (!prompt) { s.innerText = 'Write something.'; return; }
+      fetch('https://apg-api.vercel.app/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ prompt })
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.roast || d.message;
+        if (d.status === 'success') document.getElementById('Prompt').value = '';
+        loadMyRequests();
+      })
+      .catch(() => { s.innerText = 'Network error.'; });
+    });
+
+    loadMyRequests();
+  </script>
+</body>
+</html>

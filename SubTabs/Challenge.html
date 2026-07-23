@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Challenge</title>
+  <link rel="icon" href="../photo.png">
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Weekly challenge</h2>
+    <div class="form-group">
+      <label for="challengeText">Describe your proof</label>
+      <textarea id="challengeText" rows="3"></textarea>
+    </div>
+    <button class="btn btn-primary" id="challengeBtn">Submit</button>
+    <p class="status" id="challengeStatus"></p>
+  </div>
+
+  <script src="/scripts/SubTab.js"></script>
+  <script>
+    const token = sessionStorage.getItem('token');
+    document.getElementById('challengeBtn').addEventListener('click', () => {
+      const text = document.getElementById('challengeText').value.trim();
+      const s = document.getElementById('challengeStatus');
+      if (!text) { s.innerText = 'Write something.'; return; }
+      fetch('https://apg-api.vercel.app/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ prompt: text, type: 'challenge' })
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.roast || d.message;
+        if (d.status === 'success') document.getElementById('challengeText').value = '';
+      })
+      .catch(() => { s.innerText = 'Network error.'; });
+    });
+  </script>
+</body>
+</html>

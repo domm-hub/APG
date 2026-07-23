@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+  <link rel="icon" href="../photo.png">
+  <link rel="stylesheet" href="../styles/dashboard.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Profile</h2>
+    <div id="profileSection">
+      <p id="profileInfo">Loading...</p>
+      <a class="btn btn-ghost" href="https://whatsapp.com" target="_blank" style="margin-top: 12px;">Invite friends</a>
+      <div id="editProfile">
+        <h3>Edit profile</h3>
+        <div class="form-group">
+          <label>First name</label>
+          <input type="text" id="editFirstName" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label>Last name</label>
+          <input type="text" id="editLastName" placeholder="Last name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="editEmail" disabled>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" id="editPhone" placeholder="Phone">
+        </div>
+        <div class="form-group">
+          <label>Current password (required to change password)</label>
+          <input type="password" id="editCurrentPass" placeholder="Current password">
+        </div>
+        <div class="form-group">
+          <label>New password (leave blank to keep current)</label>
+          <input type="password" id="editNewPass" placeholder="New password">
+        </div>
+        <button class="btn btn-primary" id="saveProfileBtn">Save</button>
+        <p class="status" id="editStatus"></p>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+        <button class="btn btn-ghost" id="showAdminClaimBtn" style="font-size:12px;color:var(--text-muted);">Get admin</button>
+        <div id="adminClaimSection" style="display:none;margin-top:12px;">
+          <div class="form-group">
+            <label>Admin password</label>
+            <input type="password" id="adminPassInput" placeholder="Enter password">
+          </div>
+          <button class="btn btn-primary" id="claimAdminBtn">Claim admin</button>
+          <p class="status" id="adminClaimStatus"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/scripts/SubTab.js"></script>
+  <script>
+    const token = sessionStorage.getItem('token');
+
+    function populateProfileUI() {
+      const info = document.getElementById('profileInfo');
+      fetch('https://apg-api.vercel.app/api/check-session', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(user => {
+        if (user.status !== 'success' && user.status !== 'authenticated') { info.innerText = 'Session lost.'; return; }
+        const u = user.user || user;
+        info.innerHTML =
+          'Name: ' + (u.firstName || '') + ' ' + (u.lastName || '') + '<br>' +
+          'Email: ' + u.email + '<br>' +
+          'Verified: ' + (u.verified ? 'yes' : 'no');
+        document.getElementById('editEmail').value = u.email;
+        document.getElementById('editFirstName').value = u.firstName || '';
+        document.getElementById('editLastName').value = u.lastName || '';
+      })
+      .catch(() => { info.innerText = 'Session lost.'; });
+    }
+
+    document.getElementById('showAdminClaimBtn').addEventListener('click', () => {
+      const box = document.getElementById('adminClaimSection');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('claimAdminBtn').addEventListener('click', () => {
+      const password = document.getElementById('adminPassInput').value;
+      const s = document.getElementById('adminClaimStatus');
+      if (!password) { s.innerText = 'Enter password.'; return; }
+      s.innerText = 'Checking...';
+      fetch('https://apg-api.vercel.app/api/claim-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ password })
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.message;
+        if (d.status === 'success') { setTimeout(() => parent.location.reload(), 1000); }
+      })
+      .catch(() => { s.innerText = 'Network error.'; });
+    });
+
+    document.getElementById('saveProfileBtn').addEventListener('click', () => {
+      const fn = document.getElementById('editFirstName').value.trim();
+      const ln = document.getElementById('editLastName').value.trim();
+      const curPass = document.getElementById('editCurrentPass').value;
+      const newPass = document.getElementById('editNewPass').value;
+      const s = document.getElementById('editStatus');
+      if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
+      if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
+      s.innerText = 'Saving...';
+      const body = { firstName: fn, lastName: ln };
+      if (newPass) { body.current_password = curPass; body.new_password = newPass; }
+      fetch('https://apg-api.vercel.app/api/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.message;
+        if (d.status === 'success') {
+          document.getElementById('editCurrentPass').value = '';
+          document.getElementById('editNewPass').value = '';
+          populateProfileUI();
+        }
+      })
+      .catch(() => { s.innerText = 'Network error.'; });
+    });
+
+    populateProfileUI();
+  </script>
+</body>
+</html>

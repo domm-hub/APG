@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin</title>
+  <link rel="icon" href="../photo.png">
+  <link rel="stylesheet" href="../styles/dashboard.css">
+  <style>
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .prompt-cell { max-width: 300px; white-space: pre-wrap; }
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat-card { background: var(--surface); padding: 12px 18px; border-radius: 8px; min-width: 100px; }
+    .stat-card .num { font-size: 22px; font-weight: 700; }
+    .stat-card .label { font-size: 12px; color: var(--text-muted); }
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Admin</h2>
+    <p class="status" id="statusMsg"></p>
+
+    <div class="tab-bar">
+      <button class="btn btn-ghost" onclick="switchTab('stats')">Stats</button>
+      <button class="btn btn-ghost" onclick="switchTab('users')">Users</button>
+      <button class="btn btn-ghost" onclick="switchTab('requests')">Requests</button>
+      <button class="btn btn-ghost" onclick="switchTab('danger')" style="color:var(--accent);">Danger</button>
+    </div>
+
+    <div class="stats" id="adminStats"></div>
+    <div id="adminUsers" style="display:none;"></div>
+    <div id="adminRequestsList" style="display:none;"></div>
+    <div id="adminDanger" style="display:none;"></div>
+  </div>
+
+  <script src="/scripts/SubTab.js"></script>
+  <script>
+    const token = sessionStorage.getItem('token');
+    const s = document.getElementById('statusMsg');
+
+    function checkAuth() {
+      fetch('https://apg-api.vercel.app/api/check-session', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.status !== 'authenticated' || !d.user.is_admin) {
+            s.innerText = 'Admin access required.';
+            return;
+          }
+          s.innerText = '';
+          loadStats();
+          loadUsers();
+          loadRequests();
+        })
+        .catch(() => { s.innerText = 'Network error.'; });
+    }
+
+    function switchTab(tab) {
+      ['adminStats','adminUsers','adminRequestsList','adminDanger'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const map = { stats:'adminStats', users:'adminUsers', requests:'adminRequestsList', danger:'adminDanger' };
+      const target = document.getElementById(map[tab]);
+      if (target) target.style.display = 'block';
+    }
+
+    function loadStats() {
+      fetch('https://apg-api.vercel.app/api/admin/stats', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(d => {
+          const wrap = document.getElementById('adminStats');
+          if (d.status === 'error') { wrap.innerHTML = '<p>' + d.message + '</p>'; return; }
+          wrap.innerHTML = '';
+          [
+            { label: 'Total users', value: d.total_users },
+            { label: 'Verified', value: d.verified_users },
+            { label: 'Admins', value: d.admin_users },
+            { label: 'Requests', value: d.total_requests },
+            { label: 'Pending', value: d.pending_requests },
+          ].forEach(c => {
+            wrap.innerHTML += '<div class="stat-card"><div class="num">' + c.value + '</div><div class="label">' + c.label + '</div></div>';
+          });
+        });
+    }
+
+    function loadUsers() {
+      fetch('https://apg-api.vercel.app/api/admin/users', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(data => {
+          const wrap = document.getElementById('adminUsers');
+          if (data.status === 'error') { wrap.innerHTML = '<p>' + data.message + '</p>'; return; }
+          if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No users.</p>'; return; }
+          let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Admin</th><th>Action</th></tr></thead><tbody>';
+          data.forEach(u => {
+            html += '<tr><td>' + (u.firstName || '') + ' ' + (u.lastName || '') + '</td><td>' + u.email + '</td><td>' + (u.verified ? 'yes' : 'no') + '</td><td>' + (u.is_admin ? 'yes' : 'no') + '</td>' +
+              '<td>' + (u.is_admin ? '' : '<button class="btn btn-ghost" onclick="deleteUser(\'' + u.email + '\')" style="color:var(--accent);">Delete</button>') + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          wrap.innerHTML = html;
+        });
+    }
+
+    function loadRequests() {
+      fetch('https://apg-api.vercel.app/api/admin/requests', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+        .then(r => r.json())
+        .then(data => {
+          const wrap = document.getElementById('adminRequestsList');
+          if (data.status === 'error') { wrap.innerHTML = '<p>' + data.message + '</p>'; return; }
+          if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No requests yet.</p>'; return; }
+          let html = '<table><thead><tr><th>Date</th><th>Type</th><th>Email</th><th>Creator</th><th>Prompt</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+          data.forEach(r => {
+            const creator = r.creator_name || r.creator_email || '—';
+            const typeLabel = r.type === 'challenge' ? 'Challenge' : 'Request';
+            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + typeLabel + '</td><td>' + r.email + '</td><td>' + creator + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td>' +
+              '<td>' +
+              (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="acceptReq(' + r.id + ')">Accept</button> ' : '') +
+              (r.status === 'pending' ? '<button class="btn btn-ghost" onclick="rejectReq(' + r.id + ')">Reject</button> ' : '') +
+              '<button class="btn btn-ghost" onclick="deleteReq(' + r.id + ')" style="color:var(--accent);">Delete</button>' +
+              '</td></tr>';
+          });
+          html += '</tbody></table>';
+          wrap.innerHTML = html;
+        });
+    }
+
+    function acceptReq(id) {
+      fetch('https://apg-api.vercel.app/api/admin/requests/' + id + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ status: 'accepted' })
+      })
+      .then(r => r.json())
+      .then(d => { s.innerText = d.message; loadRequests(); });
+    }
+
+    function rejectReq(id) {
+      fetch('https://apg-api.vercel.app/api/admin/requests/' + id + '/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ status: 'rejected' })
+      })
+      .then(r => r.json())
+      .then(d => { s.innerText = d.message; loadRequests(); });
+    }
+
+    function deleteReq(id) {
+      if (!confirm('Delete this request?')) return;
+      fetch('https://apg-api.vercel.app/api/admin/requests/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(d => { s.innerText = d.message; loadRequests(); });
+    }
+
+    function deleteUser(email) {
+      if (!confirm('Delete user ' + email + '?')) return;
+      fetch('https://apg-api.vercel.app/api/admin/users/' + encodeURIComponent(email), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(d => { s.innerText = d.message; loadUsers(); loadStats(); });
+    }
+
+    function cleanupAll() {
+      if (!confirm('ARE YOU SURE? This deletes ALL users and ALL requests!')) return;
+      if (!confirm('Last chance — this cannot be undone!')) return;
+      s.innerText = 'Deleting...';
+      fetch('https://apg-api.vercel.app/api/admin/cleanup', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.message;
+        if (d.status === 'success') setTimeout(() => { parent.location.href = 'login.html'; }, 1500);
+      });
+    }
+
+    document.getElementById('adminDanger').innerHTML = '<h3 style="color:var(--accent);">Danger zone</h3>' +
+      '<button class="btn btn-danger" onclick="cleanupAll()">Delete everything (users + requests)</button>';
+
+    checkAuth();
+  </script>
+</body>
+</html>
