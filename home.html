@@ -43,8 +43,10 @@
 
   <footer>&copy; 2026 AllProGamerz</footer>
 
-  <script src="/scripts/verifySession.js"></script>
   <script>
+    const TOKEN = sessionStorage.getItem('token');
+    if (!TOKEN) { location.href = 'login.html'; throw 'no session'; }
+
     const tabConfig = {
       games:     'SubTabs/Games.html',
       challenge: 'SubTabs/Challenge.html',
@@ -56,19 +58,35 @@
     };
 
     const loaded = {};
+    let currentTab = null;
 
     function switchTab(name) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-      document.querySelectorAll('.tab-panel').forEach(p => {
-        p.classList.toggle('active', p.id === 'panel-' + name);
-      });
+      if (name === currentTab) return;
+
+      const oldPanel = currentTab ? document.getElementById('panel-' + currentTab) : null;
+      const newPanel = document.getElementById('panel-' + name);
+
+      document.querySelectorAll('.tab').forEach(t =>
+        t.classList.toggle('active', t.dataset.tab === name)
+      );
+
+      if (oldPanel) {
+        oldPanel.classList.add('exiting');
+        oldPanel.addEventListener('animationend', () => {
+          oldPanel.classList.remove('active', 'exiting');
+        }, { once: true });
+      }
+
+      newPanel.classList.add('active');
+
       if (!loaded[name] && tabConfig[name]) {
-        const panel = document.getElementById('panel-' + name);
         const iframe = document.createElement('iframe');
         iframe.src = tabConfig[name];
-        panel.appendChild(iframe);
+        newPanel.appendChild(iframe);
         loaded[name] = true;
       }
+
+      currentTab = name;
       history.replaceState(null, '', '#' + name);
     }
 
@@ -83,15 +101,39 @@
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
       sessionStorage.removeItem('token');
-      window.location.href = 'login.html';
+      location.href = 'login.html';
     });
 
-    const hash = location.hash.slice(1);
-    if (hash && tabConfig[hash]) {
-      switchTab(hash);
-    } else {
-      switchTab('games');
-    }
+    fetch('https://apg-api.vercel.app/api/me', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status !== 'success') {
+          sessionStorage.removeItem('token');
+          location.href = 'login.html';
+          return;
+        }
+        const user = data.user;
+        window.authenticatedUser = user;
+
+        document.getElementById('greeting').innerText = 'Hello ' + (user.firstName || '') + '!';
+        document.getElementById('mainWorkspace').style.display = '';
+
+        if (!user.firstName || !user.lastName) {
+          document.getElementById('nameReminder').style.display = '';
+        }
+        if (user.admin) {
+          document.getElementById('adminTab').style.display = '';
+        }
+
+        const hash = location.hash.slice(1);
+        switchTab(hash && tabConfig[hash] ? hash : 'games');
+      })
+      .catch(() => {
+        sessionStorage.removeItem('token');
+        location.href = 'login.html';
+      });
   </script>
 
 </body>

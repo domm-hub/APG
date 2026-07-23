@@ -161,10 +161,28 @@ section h2 {
 /* ─── TAB PANELS ─── */
 .tab-panel {
   display: none;
+  opacity: 0;
+  transform: translateY(12px);
 }
 
 .tab-panel.active {
   display: block;
+  animation: tabIn .25s ease forwards;
+}
+
+.tab-panel.exiting {
+  display: block;
+  animation: tabOut .15s ease forwards;
+}
+
+@keyframes tabIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tabOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
 }
 
 .tab-panel iframe {
