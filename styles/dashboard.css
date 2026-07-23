@@ -101,10 +101,6 @@ header h1 span {
 }
 
 section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
   margin-bottom: 20px;
 }
 
@@ -115,30 +111,66 @@ section h2 {
   color: var(--text);
 }
 
-/* ─── NAV BAR ─── */
-.nav-bar {
+/* ─── TAB BAR ─── */
+.tab-bar {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 8px 20px;
+  padding: 0 20px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.nav-bar a {
+.tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  background: none;
+  border: none;
   color: var(--text-muted);
-  text-decoration: none;
   font-size: 13px;
   font-weight: 500;
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: background .2s, color .2s;
+  padding: 12px 16px;
+  cursor: pointer;
   white-space: nowrap;
+  position: relative;
+  transition: color .2s;
 }
 
-.nav-bar a:hover {
-  background: var(--surface-2);
+.tab:hover {
   color: var(--text);
+}
+
+.tab.active {
+  color: var(--text);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+/* ─── TAB PANELS ─── */
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.tab-panel iframe {
+  width: 100%;
+  border: none;
+  min-height: 400px;
 }
 
 /* ─── FORM ELEMENTS ─── */

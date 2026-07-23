@@ -6,7 +6,6 @@
   <title>AllProGamerz — Dashboard</title>
   <link rel="icon" href="photo.png">
   <link rel="stylesheet" href="styles/dashboard.css">
-
 </head>
 <body>
 
@@ -14,66 +13,86 @@
     <h1>AP<span>G</span></h1>
     <p id="greeting" style="font-size:14px;color:var(--text-muted);font-weight:400;"></p>
     <button class="btn btn-danger" id="logoutBtn">Sign out</button>
-</header>
+  </header>
 
-<div class="nav-bar">
-  <a href="#games">Games</a>
-  <a href="#challenge">Challenge</a>
-  <a href="#prize">Prizes</a>
-  <a href="#profile">Profile</a>
-  <a href="#request">Request</a>
-  <a href="#contact">Contact</a>
-  <a href="#admin" id="adminNavLink" style="display:none;">Admin</a>
-</div>
+  <nav class="tab-bar" id="tabBar">
+    <button class="tab active" data-tab="games">Games</button>
+    <button class="tab" data-tab="challenge">Challenge</button>
+    <button class="tab" data-tab="prizes">Prizes</button>
+    <button class="tab" data-tab="profile">Profile</button>
+    <button class="tab" data-tab="request">Request</button>
+    <button class="tab" data-tab="contact">Contact</button>
+    <button class="tab" data-tab="admin" id="adminTab" style="display:none;">Admin</button>
+  </nav>
 
-<div id="mainWorkspace" class="container" style="display: none;">
+  <main id="mainWorkspace" class="container" style="display:none;">
 
-  <div id="nameReminder" style="display:none;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#eab308;">
-    Don't forget to add your <strong>First Name</strong> and <strong>Last Name</strong> in your <a href="#profile" style="color:#eab308;font-weight:600;">profile</a>!
-  </div>
+    <div id="nameReminder" style="display:none;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#eab308;">
+      Don't forget to add your <strong>First Name</strong> and <strong>Last Name</strong> in your <button class="tab-link" data-tab="profile" style="color:#eab308;font-weight:600;background:none;border:none;cursor:pointer;text-decoration:underline;">profile</button>!
+    </div>
 
-  <section id="games">
-    <iframe src="SubTabs/Games.html"></iframe>
-  </section>
+    <div class="tab-panel active" id="panel-games"></div>
+    <div class="tab-panel" id="panel-challenge"></div>
+    <div class="tab-panel" id="panel-prizes"></div>
+    <div class="tab-panel" id="panel-profile"></div>
+    <div class="tab-panel" id="panel-request"></div>
+    <div class="tab-panel" id="panel-contact"></div>
+    <div class="tab-panel" id="panel-admin"></div>
 
-  <section id="challenge">
-    <iframe src="SubTabs/Challenge.html"></iframe>
-  </section>
+  </main>
 
-  <section id="prize">
-    <iframe src="SubTabs/Prizes.html"></iframe>
-  </section>
+  <footer>&copy; 2026 AllProGamerz</footer>
 
-  <section id="profile">
-    <iframe src="SubTabs/Profile.html"></iframe>
-  </section>
+  <script src="/scripts/verifySession.js"></script>
+  <script>
+    const tabConfig = {
+      games:     'SubTabs/Games.html',
+      challenge: 'SubTabs/Challenge.html',
+      prizes:    'SubTabs/Prizes.html',
+      profile:   'SubTabs/Profile.html',
+      request:   'SubTabs/Request.html',
+      contact:   'SubTabs/Contact.html',
+      admin:     'SubTabs/Admin.html'
+    };
 
-  <section id="request">
-    <iframe src="SubTabs/Request.html"></iframe>
-  </section>
+    const loaded = {};
 
-  <section id="contact">
-    <iframe src="SubTabs/Contact.html"></iframe>
-  </section>
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+      document.querySelectorAll('.tab-panel').forEach(p => {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+      });
+      if (!loaded[name] && tabConfig[name]) {
+        const panel = document.getElementById('panel-' + name);
+        const iframe = document.createElement('iframe');
+        iframe.src = tabConfig[name];
+        panel.appendChild(iframe);
+        loaded[name] = true;
+      }
+      history.replaceState(null, '', '#' + name);
+    }
 
-  <section id="admin" style="display:none;">
-    <iframe src="SubTabs/Admin.html"></iframe>
-  </section>
+    document.getElementById('tabBar').addEventListener('click', e => {
+      const btn = e.target.closest('.tab');
+      if (btn) switchTab(btn.dataset.tab);
+    });
 
-</div>
+    document.querySelectorAll('.tab-link').forEach(link => {
+      link.addEventListener('click', () => switchTab(link.dataset.tab));
+    });
 
-<footer>&copy; 2026 AllProGamerz</footer>
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
 
-
-<script src="/scripts/verifySession.js"></script>
-<script>
-
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('token');
-  window.location.href = 'login.html';
-});
-
-</script>
+    const hash = location.hash.slice(1);
+    if (hash && tabConfig[hash]) {
+      switchTab(hash);
+    } else {
+      switchTab('games');
+    }
+  </script>
 
 </body>
 </html>
