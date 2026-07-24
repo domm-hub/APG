@@ -180,28 +180,15 @@ section h2 {
 /* ─── TAB PANELS ─── */
 .tab-panel {
   display: none;
-  opacity: 0;
   flex: none;
 }
 
 .tab-panel.active {
   display: block;
-  animation: tabIn .3s cubic-bezier(.4,0,.2,1) forwards;
 }
 
 .tab-panel.exiting {
-  display: block;
-  animation: tabOut .2s cubic-bezier(.4,0,.2,1) forwards;
-}
-
-@keyframes tabIn {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes tabOut {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to   { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  display: none;
 }
 
 .tab-content {

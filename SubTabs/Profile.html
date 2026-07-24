@@ -64,6 +64,15 @@
           <button class="btn btn-primary" id="claimAdminBtn">Claim admin</button>
           <p class="status" id="adminClaimStatus"></p>
         </div>
+        <button class="btn btn-ghost" id="showRemoveAdminBtn" style="display:none;font-size:12px;color:var(--text-muted);">Remove admin</button>
+        <div id="removeAdminSection" style="display:none;margin-top:12px;">
+          <div class="form-group">
+            <label>Admin password</label>
+            <input type="password" id="removeAdminPassInput" placeholder="Enter password">
+          </div>
+          <button class="btn btn-danger" id="removeAdminBtn">Remove admin</button>
+          <p class="status" id="removeAdminStatus"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -121,6 +130,9 @@
         document.getElementById('editFirstName').value = u.firstName || '';
         document.getElementById('editLastName').value = u.lastName || '';
         document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
+        if (u.is_admin) {
+          document.getElementById('showRemoveAdminBtn').style.display = '';
+        }
       })
       .catch(() => { info.innerText = 'Session lost.'; });
     }
@@ -136,6 +148,29 @@
       if (!password) { s.innerText = 'Enter password.'; return; }
       s.innerText = 'Checking...';
       fetch('https://apg-api.vercel.app/api/claim-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ password })
+      })
+      .then(r => r.json())
+      .then(d => {
+        s.innerText = d.message;
+        if (d.status === 'success') { setTimeout(() => parent.location.reload(), 1000); }
+      })
+      .catch(() => { s.innerText = 'Network error.'; });
+    });
+
+    document.getElementById('showRemoveAdminBtn').addEventListener('click', () => {
+      const box = document.getElementById('removeAdminSection');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('removeAdminBtn').addEventListener('click', () => {
+      const password = document.getElementById('removeAdminPassInput').value;
+      const s = document.getElementById('removeAdminStatus');
+      if (!password) { s.innerText = 'Enter password.'; return; }
+      s.innerText = 'Checking...';
+      fetch('https://apg-api.vercel.app/api/remove-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ password })
