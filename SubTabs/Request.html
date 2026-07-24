@@ -36,6 +36,17 @@
   <script src="/scripts/SubTab.js"></script>
   <script>
     const token = sessionStorage.getItem('token');
+    let userCoins = null;
+    let userIsAdmin = false;
+
+    function updateSubmitState() {
+      const btn = document.getElementById('Btn');
+      if (userIsAdmin || userCoins === null || userCoins >= 50) {
+        btn.disabled = false;
+      } else {
+        btn.disabled = true;
+      }
+    }
 
     function loadCoinBalance() {
       fetch('https://apg-api.vercel.app/api/check-session', {
@@ -45,9 +56,12 @@
       .then(data => {
         if (data.status === 'authenticated') {
           const user = data.user;
-          document.getElementById('requestCoinBalance').innerText = user.coins_infinite
+          userIsAdmin = user.coins_infinite;
+          userCoins = user.coins;
+          document.getElementById('requestCoinBalance').innerText = userIsAdmin
             ? 'Website requests: unlimited coins'
             : 'Coins: ' + (user.coins || 0) + ' | Website requests cost 50 coins';
+          updateSubmitState();
         }
       });
     }
@@ -84,9 +98,12 @@
         s.innerText = d.roast || d.message;
         if (d.status === 'success') {
           document.getElementById('Prompt').value = '';
+          userCoins = d.coins;
+          userIsAdmin = d.coins_infinite;
           document.getElementById('requestCoinBalance').innerText = d.coins_infinite
             ? 'Website requests: unlimited coins'
             : 'Coins: ' + (d.coins || 0) + ' | Website requests cost 50 coins';
+          updateSubmitState();
         }
         loadMyRequests();
       })

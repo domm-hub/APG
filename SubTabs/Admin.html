@@ -116,6 +116,12 @@
               '<td>' + (u.is_admin ? '' : '<button class="btn btn-ghost" onclick="deleteUser(\'' + u.email + '\')" style="color:var(--accent);">Delete</button>') + '</td></tr>';
           });
           html += '</tbody></table>';
+          html += '<div style="margin-top:16px;"><h3 style="font-size:14px;font-weight:600;margin:0 0 8px;">Give coins</h3>' +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<input type="email" id="giveCoinsEmail" placeholder="User email" style="flex:1;min-width:150px;">' +
+            '<input type="number" id="giveCoinsAmount" placeholder="Amount" min="1" style="width:100px;">' +
+            '<button class="btn btn-primary" onclick="giveCoins()">Give</button>' +
+            '</div><p class="status" id="giveCoinsStatus"></p></div>';
           wrap.innerHTML = html;
         });
     }
@@ -183,6 +189,22 @@
       })
       .then(r => r.json())
       .then(d => { s.innerText = d.message; loadUsers(); loadStats(); });
+    }
+
+    function giveCoins() {
+      const email = document.getElementById('giveCoinsEmail').value.trim();
+      const amount = parseInt(document.getElementById('giveCoinsAmount').value, 10);
+      const st = document.getElementById('giveCoinsStatus');
+      if (!email || !amount || amount <= 0) { st.innerText = 'Enter a valid email and amount.'; return; }
+      st.innerText = 'Giving coins...';
+      fetch('https://apg-api.vercel.app/api/admin/give-coins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ email, amount })
+      })
+      .then(r => r.json())
+      .then(d => { st.innerText = d.message; loadUsers(); loadStats(); })
+      .catch(() => { st.innerText = 'Network error.'; });
     }
 
     function cleanupAll() {
