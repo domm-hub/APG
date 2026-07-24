@@ -23,6 +23,7 @@
 <body>
   <div class="container">
     <h2>Request a custom website</h2>
+    <p class="coin-balance" id="requestCoinBalance">Website requests cost 50 coins.</p>
     <div class="form-group">
       <label for="Prompt">Describe what you want</label>
       <textarea id="Prompt" rows="4" placeholder="Layout, theme, pages..."></textarea>
@@ -35,6 +36,21 @@
   <script src="/scripts/SubTab.js"></script>
   <script>
     const token = sessionStorage.getItem('token');
+
+    function loadCoinBalance() {
+      fetch('https://apg-api.vercel.app/api/check-session', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'authenticated') {
+          const user = data.user;
+          document.getElementById('requestCoinBalance').innerText = user.coins_infinite
+            ? 'Website requests: unlimited coins'
+            : 'Coins: ' + (user.coins || 0) + ' | Website requests cost 50 coins';
+        }
+      });
+    }
 
     function loadMyRequests() {
       fetch('https://apg-api.vercel.app/api/requests', {
@@ -66,13 +82,19 @@
       .then(r => r.json())
       .then(d => {
         s.innerText = d.roast || d.message;
-        if (d.status === 'success') document.getElementById('Prompt').value = '';
+        if (d.status === 'success') {
+          document.getElementById('Prompt').value = '';
+          document.getElementById('requestCoinBalance').innerText = d.coins_infinite
+            ? 'Website requests: unlimited coins'
+            : 'Coins: ' + (d.coins || 0) + ' | Website requests cost 50 coins';
+        }
         loadMyRequests();
       })
       .catch(() => { s.innerText = 'Network error.'; });
     });
 
     loadMyRequests();
+    loadCoinBalance();
   </script>
 </body>
 </html>

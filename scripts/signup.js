@@ -1,4 +1,5 @@
 const status = document.getElementById("userStatus");
+const inviteCode = new URLSearchParams(window.location.search).get("invite");
 
 document.getElementById("signupBtn").addEventListener("click", () => {
   // 1. Build the payload matching the exact keys your Flask app expects
@@ -9,6 +10,8 @@ document.getElementById("signupBtn").addEventListener("click", () => {
     phonenumber: document.getElementById("phone").value,
     password: document.getElementById("password").value
   };
+
+  if (inviteCode) payload.invite_code = inviteCode;
 
     if (payload.password.length < 8){
     status.innerText = "Password is too short. 8+ chars minimum.";

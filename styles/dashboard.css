@@ -412,6 +412,39 @@ label {
   padding-top: 12px;
 }
 
+.coin-balance {
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.invite-tools {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.invite-tools .status {
+  margin: 8px 0;
+}
+
+.invite-row {
+  margin: 8px 0 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.invite-row a {
+  color: var(--accent);
+}
+
+.invite-row span {
+  color: var(--text-muted);
+}
+
 #profileInfo {
   font-size: 14px;
   line-height: 1.7;

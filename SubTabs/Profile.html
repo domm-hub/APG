@@ -15,6 +15,12 @@
 <body>
   <div class="container">
     <h2>Profile</h2>
+    <p class="coin-balance" id="coinBalance">Coins: loading...</p>
+    <div class="invite-tools">
+      <button class="btn btn-ghost" id="generateInviteBtn">Generate invite link</button>
+      <p class="status" id="inviteStatus"></p>
+      <div id="inviteList"></div>
+    </div>
     <div id="profileSection">
       <p id="profileInfo">Loading...</p>
       <a class="btn btn-ghost" href="https://whatsapp.com" target="_blank" style="margin-top: 12px;">Invite friends</a>
@@ -66,6 +72,38 @@
   <script>
     const token = sessionStorage.getItem('token');
 
+    function loadInvites() {
+      fetch('https://apg-api.vercel.app/api/invites', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+        const list = document.getElementById('inviteList');
+        if (!Array.isArray(data)) return;
+        list.innerHTML = data.map(invite =>
+          '<p class="invite-row"><a href="' + invite.link + '" target="_blank" rel="noopener noreferrer">' + invite.link + '</a> <span>(' + invite.uses + '/' + invite.max_uses + ' used)</span></p>'
+        ).join('');
+      })
+      .catch(() => {
+        document.getElementById('inviteStatus').innerText = 'Unable to load invites.';
+      });
+    }
+
+    document.getElementById('generateInviteBtn').addEventListener('click', () => {
+      const status = document.getElementById('inviteStatus');
+      status.innerText = 'Generating...';
+      fetch('https://apg-api.vercel.app/api/invites', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+        status.innerText = data.status === 'success' ? 'Invite link created.' : data.message;
+        if (data.status === 'success') loadInvites();
+      })
+      .catch(() => { status.innerText = 'Network error.'; });
+    });
+
     function populateProfileUI() {
       const info = document.getElementById('profileInfo');
       fetch('https://apg-api.vercel.app/api/check-session', {
@@ -82,6 +120,7 @@
         document.getElementById('editEmail').value = u.email;
         document.getElementById('editFirstName').value = u.firstName || '';
         document.getElementById('editLastName').value = u.lastName || '';
+        document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
       })
       .catch(() => { info.innerText = 'Session lost.'; });
     }
@@ -138,6 +177,7 @@
     });
 
     populateProfileUI();
+    loadInvites();
   </script>
 </body>
 </html>
