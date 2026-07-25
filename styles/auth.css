@@ -1,0 +1,23 @@
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-card { max-width: 380px; text-align: left; }
+.auth-card .logo { font-size: 20px; margin-bottom: 4px; }
+.auth-card .sub { font-size: 14px; color: var(--text-muted); margin: 0 0 24px; }
+
+.alt-link { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-muted); }
+.alt-link a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.alt-link a:hover { text-decoration: underline; }
+
+.back-link { display: inline-block; margin-top: 16px; font-size: 13px; color: var(--text-muted); text-decoration: none; }
+.back-link:hover { color: var(--text); }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 20px; border-radius: 12px; }
+  .auth-card .logo { font-size: 18px; }
+}

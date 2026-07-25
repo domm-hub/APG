@@ -4,24 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verify — AllProGamerz</title>
-  <link rel="stylesheet" href="styles/verify.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/auth.css">
 </head>
 <body>
-  <div class="card">
+  <div class="card auth-card" style="text-align:center;">
     <div class="logo">AP<span>G</span></div>
-    <h1>Verify your account</h1>
-    <p>We sent a code to<br><span class="email-display" id="emailTarget">your email</span></p>
-
-    <input type="text" id="pinInput" class="pin-input" placeholder="0000" maxlength="4" autocomplete="off">
-
-    <button class="btn btn-primary" id="verifyBtn">Verify</button>
-    <div class="status-msg" id="statusMessage"></div>
+    <h1 style="font-size:18px;font-weight:700;margin:0 0 8px;">Verify your account</h1>
+    <p style="font-size:14px;color:var(--text-muted);margin:0 0 24px;">We sent a code to<br><strong style="color:var(--text);" id="emailTarget">your email</strong></p>
+    <input type="text" id="pinInput" class="pin-input" placeholder="0000" maxlength="4" autocomplete="one-time-code">
+    <button class="btn btn-primary btn-block" id="verifyBtn">Verify</button>
+    <p class="status" id="statusMessage"></p>
     <p style="font-size:13px;color:var(--text-muted);margin-top:16px;">
       Didn't get it? <a href="#" id="resendLink" style="color:var(--accent);text-decoration:none;font-weight:500;">Resend code</a>
     </p>
   </div>
-
+  <style>
+    .pin-input {
+      width: 100%;
+      padding: 14px;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      font-family: 'SF Mono', ui-monospace, monospace;
+      transition: border-color var(--transition);
+      margin-bottom: 20px;
+    }
+    .pin-input:focus { border-color: var(--accent); }
+  </style>
   <script>
+    const API = 'https://apg-api.vercel.app';
     const status = document.getElementById('statusMessage');
     const emailTarget = document.getElementById('emailTarget');
     const pendingEmail = sessionStorage.getItem('pending_verification_email');
@@ -34,16 +52,9 @@
 
     document.getElementById('verifyBtn').addEventListener('click', () => {
       const pin = document.getElementById('pinInput').value;
-      if (pin.length !== 4) {
-        status.innerText = 'Enter a 4-digit code.';
-        status.style.color = '#ef4444';
-        return;
-      }
-
+      if (pin.length !== 4) { status.innerText = 'Enter a 4-digit code.'; return; }
       status.innerText = 'Verifying...';
-      status.style.color = '#8888a0';
-
-      fetch('https://apg-api.vercel.app/api/verify', {
+      fetch(API + '/api/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail, code: pin })
@@ -52,26 +63,21 @@
       .then(data => {
         if (data.status === 'success') {
           status.innerText = 'Verified!';
-          status.style.color = '#22c55e';
+          status.style.color = 'var(--green)';
           sessionStorage.removeItem('pending_verification_email');
           setTimeout(() => { window.location.href = 'login.html'; }, 1500);
         } else {
           status.innerText = data.message;
-          status.style.color = '#ef4444';
         }
       })
-      .catch(() => {
-        status.innerText = 'Network error.';
-        status.style.color = '#ef4444';
-      });
+      .catch(() => { status.innerText = 'Network error.'; });
     });
 
     document.getElementById('resendLink').addEventListener('click', (e) => {
       e.preventDefault();
       if (!pendingEmail) return;
       status.innerText = 'Resending...';
-      status.style.color = '#8888a0';
-      fetch('https://apg-api.vercel.app/api/resend-code', {
+      fetch(API + '/api/resend-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail })
@@ -79,12 +85,9 @@
       .then(r => r.json())
       .then(data => {
         status.innerText = data.status === 'success' ? 'Code resent!' : data.message;
-        status.style.color = data.status === 'success' ? '#22c55e' : '#ef4444';
+        status.style.color = data.status === 'success' ? 'var(--green)' : '';
       })
-      .catch(() => {
-        status.innerText = 'Network error.';
-        status.style.color = '#ef4444';
-      });
+      .catch(() => { status.innerText = 'Network error.'; });
     });
   </script>
 </body>

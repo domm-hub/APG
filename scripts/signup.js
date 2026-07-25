@@ -1,52 +1,51 @@
-const status = document.getElementById("userStatus");
-const inviteCode = new URLSearchParams(window.location.search).get("invite");
+(function() {
+  var API = 'https://apg-api.vercel.app';
+  var status = document.getElementById('userStatus');
+  var btn = document.getElementById('signupBtn');
+  var inviteCode = new URLSearchParams(window.location.search).get('invite');
 
-document.getElementById("signupBtn").addEventListener("click", () => {
-  // 1. Build the payload matching the exact keys your Flask app expects
-  const payload = {
-    firstname: document.getElementById("firstName").value,
-    lastname: document.getElementById("lastName").value,
-    email: document.getElementById("email").value,
-    phonenumber: document.getElementById("phone").value,
-    password: document.getElementById("password").value
-  };
+  btn.addEventListener('click', function() {
+    var payload = {
+      firstname: document.getElementById('firstName').value.trim(),
+      lastname: document.getElementById('lastName').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phonenumber: document.getElementById('phone').value.trim(),
+      password: document.getElementById('password').value
+    };
 
-  if (inviteCode) payload.invite_code = inviteCode;
+    if (inviteCode) payload.invite_code = inviteCode;
 
-    if (payload.password.length < 8){
-    status.innerText = "Password is too short. 8+ chars minimum.";
-    return;
-  }
-
-  status.innerText = "⏳ Creating account...";
-
-  // 2. Fire the network request across the interne to Vercel
-  fetch('https://apg-api.vercel.app/api/signup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload) // Converts the object into a JSON string
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'success') {
-      status.innerText = "✅ " + data.message;
-      
-      // Save just the email to sessionStorage so the verify page knows who to verify
-      sessionStorage.setItem("pending_verification_email", payload.email);
-      
-      // Redirect to your brand-new verify layout view instead of home!
-      setTimeout(() => {
-        window.location.href = "verify.html";
-      }, 1500);
-    } else {
-      // Handles error states like "Email is already taken"
-      status.innerText = "❌ Error: " + data.message;
+    if (!payload.firstname || !payload.lastname || !payload.email || !payload.phonenumber || !payload.password) {
+      status.innerText = 'Fill in all fields.';
+      return;
     }
-  })
-  .catch(err => {
-    status.innerText = "❌ Network error. Backend is unreachable.";
-    console.error(err);
+    if (payload.password.length < 8) {
+      status.innerText = 'Password is too short. 8+ chars minimum.';
+      return;
+    }
+
+    btn.disabled = true;
+    status.innerText = 'Creating account...';
+
+    fetch(API + '/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      if (data.status === 'success') {
+        status.innerText = data.message;
+        sessionStorage.setItem('pending_verification_email', payload.email);
+        setTimeout(function() { window.location.href = 'verify.html'; }, 1500);
+      } else {
+        status.innerText = data.message;
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      status.innerText = 'Network error.';
+    });
   });
-});
+})();

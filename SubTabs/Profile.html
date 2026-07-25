@@ -1,218 +1,181 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
-  <link rel="icon" href="../photo.png">
-  <link rel="stylesheet" href="../styles/dashboard.css">
-  <style>
-    @media (max-width: 600px) {
-      body { padding: 14px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Profile</h2>
-    <p class="coin-balance" id="coinBalance">Coins: loading...</p>
-    <div class="invite-tools">
-      <button class="btn btn-ghost" id="generateInviteBtn">Generate invite link</button>
+<div>
+  <h2 style="font-size:15px;font-weight:600;margin:0 0 16px;">Profile</h2>
+  <p class="coin-balance" id="coinBalance">Coins: loading...</p>
+
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <button class="btn btn-ghost btn-sm" id="generateInviteBtn">Generate invite link</button>
       <p class="status" id="inviteStatus"></p>
       <div id="inviteList"></div>
     </div>
-    <div id="profileSection">
-      <p id="profileInfo">Loading...</p>
-      <a class="btn btn-ghost" href="https://whatsapp.com" target="_blank" style="margin-top: 12px;">Invite friends</a>
-      <div id="editProfile">
-        <h3>Edit profile</h3>
-        <div class="form-group">
-          <label>First name</label>
-          <input type="text" id="editFirstName" placeholder="First name">
-        </div>
-        <div class="form-group">
-          <label>Last name</label>
-          <input type="text" id="editLastName" placeholder="Last name">
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="editEmail" disabled>
-        </div>
-        <div class="form-group">
-          <label>Phone</label>
-          <input type="text" id="editPhone" placeholder="Phone">
-        </div>
-        <div class="form-group">
-          <label>Current password (required to change password)</label>
-          <input type="password" id="editCurrentPass" placeholder="Current password">
-        </div>
-        <div class="form-group">
-          <label>New password (leave blank to keep current)</label>
-          <input type="password" id="editNewPass" placeholder="New password">
-        </div>
-        <button class="btn btn-primary" id="saveProfileBtn">Save</button>
-        <p class="status" id="editStatus"></p>
-      </div>
+  </div>
 
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-        <button class="btn btn-ghost" id="showAdminClaimBtn" style="font-size:12px;color:var(--text-muted);">Get admin</button>
-        <div id="adminClaimSection" style="display:none;margin-top:12px;">
-          <div class="form-group">
-            <label>Admin password</label>
-            <input type="password" id="adminPassInput" placeholder="Enter password">
-          </div>
-          <button class="btn btn-primary" id="claimAdminBtn">Claim admin</button>
-          <p class="status" id="adminClaimStatus"></p>
-        </div>
-        <button class="btn btn-ghost" id="showRemoveAdminBtn" style="display:none;font-size:12px;color:var(--text-muted);">Remove admin</button>
-        <div id="removeAdminSection" style="display:none;margin-top:12px;">
-          <div class="form-group">
-            <label>Admin password</label>
-            <input type="password" id="removeAdminPassInput" placeholder="Enter password">
-          </div>
-          <button class="btn btn-danger" id="removeAdminBtn">Remove admin</button>
-          <p class="status" id="removeAdminStatus"></p>
-        </div>
+  <div class="section">
+    <p id="profileInfo" style="font-size:14px;color:var(--text-muted);line-height:1.7;">Loading...</p>
+    <div id="editProfile" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <h3 style="font-size:14px;font-weight:600;margin:0 0 12px;">Edit profile</h3>
+      <div class="form-group">
+        <label>First name</label>
+        <input type="text" id="editFirstName" placeholder="First name">
       </div>
+      <div class="form-group">
+        <label>Last name</label>
+        <input type="text" id="editLastName" placeholder="Last name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="editEmail" disabled>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="editPhone" placeholder="Phone">
+      </div>
+      <div class="form-group">
+        <label>Current password (required to change password)</label>
+        <input type="password" id="editCurrentPass" placeholder="Current password">
+      </div>
+      <div class="form-group">
+        <label>New password (leave blank to keep current)</label>
+        <input type="password" id="editNewPass" placeholder="New password">
+      </div>
+      <button class="btn btn-primary" id="saveProfileBtn">Save</button>
+      <p class="status" id="editStatus"></p>
     </div>
   </div>
 
-  <script src="/scripts/SubTab.js"></script>
-  <script>
-    const token = sessionStorage.getItem('token');
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <button class="btn btn-ghost btn-sm" id="showAdminClaimBtn" style="color:var(--text-muted);">Get admin</button>
+    <div id="adminClaimSection" style="display:none;margin-top:12px;">
+      <div class="form-group">
+        <label>Admin password</label>
+        <input type="password" id="adminPassInput" placeholder="Enter password">
+      </div>
+      <button class="btn btn-primary btn-sm" id="claimAdminBtn">Claim admin</button>
+      <p class="status" id="adminClaimStatus"></p>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="showRemoveAdminBtn" style="display:none;color:var(--text-muted);">Remove admin</button>
+    <div id="removeAdminSection" style="display:none;margin-top:12px;">
+      <div class="form-group">
+        <label>Admin password</label>
+        <input type="password" id="removeAdminPassInput" placeholder="Enter password">
+      </div>
+      <button class="btn btn-danger btn-sm" id="removeAdminBtn">Remove admin</button>
+      <p class="status" id="removeAdminStatus"></p>
+    </div>
+  </div>
+</div>
 
-    function loadInvites() {
-      fetch('https://apg-api.vercel.app/api/invites', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      .then(r => r.json())
-      .then(data => {
-        const list = document.getElementById('inviteList');
-        if (!Array.isArray(data)) return;
-        list.innerHTML = data.map(invite =>
-          '<p class="invite-row"><a href="' + invite.link + '" target="_blank" rel="noopener noreferrer">' + invite.link + '</a> <span>(' + invite.uses + '/' + invite.max_uses + ' used)</span></p>'
-        ).join('');
-      })
-      .catch(() => {
-        document.getElementById('inviteStatus').innerText = 'Unable to load invites.';
-      });
-    }
+<script>
+  var token = sessionStorage.getItem('token');
+  var API = 'https://apg-api.vercel.app';
 
-    document.getElementById('generateInviteBtn').addEventListener('click', () => {
-      const status = document.getElementById('inviteStatus');
-      status.innerText = 'Generating...';
-      fetch('https://apg-api.vercel.app/api/invites', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      .then(r => r.json())
-      .then(data => {
-        status.innerText = data.status === 'success' ? 'Invite link created.' : data.message;
-        if (data.status === 'success') loadInvites();
-      })
-      .catch(() => { status.innerText = 'Network error.'; });
+  function loadInvites() {
+    fetch(API + '/api/invites', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var list = document.getElementById('inviteList');
+      if (!Array.isArray(data)) return;
+      list.innerHTML = data.map(function(invite) {
+        return '<p style="margin:8px 0 0;font-size:13px;overflow-wrap:anywhere;"><a href="' + invite.link + '" target="_blank" style="color:var(--accent);">' + invite.link + '</a> <span style="color:var(--text-muted);">(' + invite.uses + '/' + invite.max_uses + ' used)</span></p>';
+      }).join('');
+    })
+    .catch(function() { document.getElementById('inviteStatus').innerText = 'Unable to load invites.'; });
+  }
+
+  document.getElementById('generateInviteBtn').addEventListener('click', function() {
+    var status = document.getElementById('inviteStatus');
+    status.innerText = 'Generating...';
+    fetch(API + '/api/invites', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      status.innerText = data.status === 'success' ? 'Invite link created.' : data.message;
+      if (data.status === 'success') loadInvites();
+    })
+    .catch(function() { status.innerText = 'Network error.'; });
+  });
+
+  function populateProfileUI() {
+    fetch(API + '/api/check-session', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status !== 'success' && data.status !== 'authenticated') return;
+      var u = data.user;
+      document.getElementById('profileInfo').innerHTML =
+        'Name: ' + (u.firstName || '') + ' ' + (u.lastName || '') + '<br>Email: ' + u.email + '<br>Verified: ' + (u.verified ? 'yes' : 'no');
+      document.getElementById('editEmail').value = u.email;
+      document.getElementById('editFirstName').value = u.firstName || '';
+      document.getElementById('editLastName').value = u.lastName || '';
+      document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
+      if (u.is_admin) document.getElementById('showRemoveAdminBtn').style.display = '';
     });
+  }
 
-    function populateProfileUI() {
-      const info = document.getElementById('profileInfo');
-      fetch('https://apg-api.vercel.app/api/check-session', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      .then(r => r.json())
-      .then(user => {
-        if (user.status !== 'success' && user.status !== 'authenticated') { info.innerText = 'Session lost.'; return; }
-        const u = user.user || user;
-        info.innerHTML =
-          'Name: ' + (u.firstName || '') + ' ' + (u.lastName || '') + '<br>' +
-          'Email: ' + u.email + '<br>' +
-          'Verified: ' + (u.verified ? 'yes' : 'no');
-        document.getElementById('editEmail').value = u.email;
-        document.getElementById('editFirstName').value = u.firstName || '';
-        document.getElementById('editLastName').value = u.lastName || '';
-        document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
-        if (u.is_admin) {
-          document.getElementById('showRemoveAdminBtn').style.display = '';
-        }
-      })
-      .catch(() => { info.innerText = 'Session lost.'; });
-    }
+  document.getElementById('showAdminClaimBtn').addEventListener('click', function() {
+    var box = document.getElementById('adminClaimSection');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('claimAdminBtn').addEventListener('click', function() {
+    var pw = document.getElementById('adminPassInput').value;
+    var s = document.getElementById('adminClaimStatus');
+    if (!pw) { s.innerText = 'Enter password.'; return; }
+    s.innerText = 'Checking...';
+    fetch(API + '/api/claim-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ password: pw })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { s.innerText = d.message; if (d.status === 'success') setTimeout(function() { parent.location.reload(); }, 1000); })
+    .catch(function() { s.innerText = 'Network error.'; });
+  });
 
-    document.getElementById('showAdminClaimBtn').addEventListener('click', () => {
-      const box = document.getElementById('adminClaimSection');
-      box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    });
+  document.getElementById('showRemoveAdminBtn').addEventListener('click', function() {
+    var box = document.getElementById('removeAdminSection');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('removeAdminBtn').addEventListener('click', function() {
+    var pw = document.getElementById('removeAdminPassInput').value;
+    var s = document.getElementById('removeAdminStatus');
+    if (!pw) { s.innerText = 'Enter password.'; return; }
+    s.innerText = 'Checking...';
+    fetch(API + '/api/remove-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ password: pw })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { s.innerText = d.message; if (d.status === 'success') setTimeout(function() { parent.location.reload(); }, 1000); })
+    .catch(function() { s.innerText = 'Network error.'; });
+  });
 
-    document.getElementById('claimAdminBtn').addEventListener('click', () => {
-      const password = document.getElementById('adminPassInput').value;
-      const s = document.getElementById('adminClaimStatus');
-      if (!password) { s.innerText = 'Enter password.'; return; }
-      s.innerText = 'Checking...';
-      fetch('https://apg-api.vercel.app/api/claim-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ password })
-      })
-      .then(r => r.json())
-      .then(d => {
-        s.innerText = d.message;
-        if (d.status === 'success') { setTimeout(() => parent.location.reload(), 1000); }
-      })
-      .catch(() => { s.innerText = 'Network error.'; });
-    });
+  document.getElementById('saveProfileBtn').addEventListener('click', function() {
+    var fn = document.getElementById('editFirstName').value.trim();
+    var ln = document.getElementById('editLastName').value.trim();
+    var curPass = document.getElementById('editCurrentPass').value;
+    var newPass = document.getElementById('editNewPass').value;
+    var s = document.getElementById('editStatus');
+    if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
+    if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
+    s.innerText = 'Saving...';
+    var body = { firstName: fn, lastName: ln };
+    if (newPass) { body.current_password = curPass; body.new_password = newPass; }
+    fetch(API + '/api/update-profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      s.innerText = d.message;
+      if (d.status === 'success') {
+        document.getElementById('editCurrentPass').value = '';
+        document.getElementById('editNewPass').value = '';
+        populateProfileUI();
+      }
+    })
+    .catch(function() { s.innerText = 'Network error.'; });
+  });
 
-    document.getElementById('showRemoveAdminBtn').addEventListener('click', () => {
-      const box = document.getElementById('removeAdminSection');
-      box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    });
-
-    document.getElementById('removeAdminBtn').addEventListener('click', () => {
-      const password = document.getElementById('removeAdminPassInput').value;
-      const s = document.getElementById('removeAdminStatus');
-      if (!password) { s.innerText = 'Enter password.'; return; }
-      s.innerText = 'Checking...';
-      fetch('https://apg-api.vercel.app/api/remove-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ password })
-      })
-      .then(r => r.json())
-      .then(d => {
-        s.innerText = d.message;
-        if (d.status === 'success') { setTimeout(() => parent.location.reload(), 1000); }
-      })
-      .catch(() => { s.innerText = 'Network error.'; });
-    });
-
-    document.getElementById('saveProfileBtn').addEventListener('click', () => {
-      const fn = document.getElementById('editFirstName').value.trim();
-      const ln = document.getElementById('editLastName').value.trim();
-      const curPass = document.getElementById('editCurrentPass').value;
-      const newPass = document.getElementById('editNewPass').value;
-      const s = document.getElementById('editStatus');
-      if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
-      if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
-      s.innerText = 'Saving...';
-      const body = { firstName: fn, lastName: ln };
-      if (newPass) { body.current_password = curPass; body.new_password = newPass; }
-      fetch('https://apg-api.vercel.app/api/update-profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(body)
-      })
-      .then(r => r.json())
-      .then(d => {
-        s.innerText = d.message;
-        if (d.status === 'success') {
-          document.getElementById('editCurrentPass').value = '';
-          document.getElementById('editNewPass').value = '';
-          populateProfileUI();
-        }
-      })
-      .catch(() => { s.innerText = 'Network error.'; });
-    });
-
-    populateProfileUI();
-    loadInvites();
-  </script>
-</body>
-</html>
+  populateProfileUI();
+  loadInvites();
+</script>

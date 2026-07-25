@@ -1,100 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Games</title>
-  <link rel="icon" href="../photo.png">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #121212;
-      color: #f0f0f0;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #ff4757;
-    }
-    h2 {
-      margin-top: 30px;
-      color: #1e90ff;
-      border-bottom: 2px solid #1e90ff;
-      padding-bottom: 5px;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      margin: 10px 0;
-      padding: 10px;
-      background: #2f3542;
-      border-radius: 6px;
-      transition: background 0.3s;
-    }
-    li:hover {
-      background: #3d3d3d;
-    }
-    a {
-      text-decoration: none;
-      color: #ffa502;
-      font-weight: bold;
-    }
-    a:hover {
-      color: #ff6348;
-    }
-    .note {
-      font-size: 0.9em;
-      color: #aaa;
-    }
-    #searchBar {
-      width: 100%;
-      padding: 12px;
-      margin: 20px 0;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
-    }
-    .guide {
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 40px;
-    }
-    .guide h2 {
-      color: #ffa502;
-      border-bottom: 2px solid #ffa502;
-    }
-    .guide ol {
-      margin: 0;
-      padding-left: 20px;
-    }
-    .guide li {
-      background: none;
-      margin: 8px 0;
-      padding: 0;
-      color: #ddd;
-    }
-    @media (max-width: 600px) {
-      body { padding: 14px; }
-      h1 { font-size: 20px; }
-      h2 { font-size: 16px; margin-top: 20px; }
-      li { padding: 12px; font-size: 14px; }
-      .note { font-size: 0.85em; }
-      .guide { padding: 16px; }
-    }
-  </style>
-</head>
-<body>
+<div class="tab-content-games">
   <h1>Game Collection</h1>
-
   <div style="text-align:center;">
-    <img src="../photo.png" alt="Game Banner" style="max-width: 250px; height: auto;">
+    <img src="../photo.png" alt="Game Banner" style="max-width:250px;height:auto;">
   </div>
-
-  <input type="text" id="searchBar" placeholder="Search for a game..." onkeyup="searchGames()">
+  <input type="text" id="searchBar" placeholder="Search for a game..." onkeyup="searchGames()" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;margin:20px 0;font-family:inherit;">
 
   <h2>Direct Download</h2>
   <ul id="directList">
@@ -116,48 +25,50 @@
   <h2>Torrent Needed</h2>
   <ul id="torrentList">
     <li>
-      <a href="https://paste.fitgirl-repacks.site/?a40dba246ac18611#A6oEwSYkYMwnNGG9jHgj2ZQJznLEpmJMLyNPF88BhfcE" target="_blank">
-        GTA 5
-      </a>
+      <a href="https://paste.fitgirl-repacks.site/?a40dba246ac18611#A6oEwSYkYMwnNGG9jHgj2ZQJznLEpmJMLyNPF88BhfcE" target="_blank">GTA 5</a>
       <span class="note">(Torrent Required)</span>
     </li>
     <li>
-      <a href="https://paste.fitgirl-repacks.site/?5d12c83f3f0271bf#8fjZDeUmeGL2zRHAtRdpeGwUu3gXeFAi3dKCHb1YhPbg" target="_blank">
-        FIFA 26 (Desktop)
-      </a>
+      <a href="https://paste.fitgirl-repacks.site/?5d12c83f3f0271bf#8fjZDeUmeGL2zRHAtRdpeGwUu3gXeFAi3dKCHb1YhPbg" target="_blank">FIFA 26 (Desktop)</a>
       <span class="note">(Torrent Required)</span>
     </li>
   </ul>
 
   <div class="guide">
     <h2>⚡ Torrent Guide</h2>
-    <p>Some games will need a <strong>torrent</strong> and will be written with <em>(Torrent Required)</em> next to them.</p>
-    <p>Here is the website for a torrent client:
-      <a href="https://webtorrent.io/" target="_blank">https://webtorrent.io/</a>
-    </p>
-    <p>Scroll down the website and press <strong>"Get for Desktop"</strong>.</p>
-    <h3>Guide on How to Use Torrent:</h3>
+    <p>Some games need a <strong>torrent</strong> — marked with <em>(Torrent Required)</em>.</p>
+    <p>Torrent client: <a href="https://webtorrent.io/" target="_blank">webtorrent.io</a> — click <strong>"Get for Desktop"</strong>.</p>
+    <h3>How to use:</h3>
     <ol>
       <li>Download the torrent client from the link above.</li>
       <li>Paste the game file into the torrent (only for torrent-required games).</li>
-      <li>Once downloaded, the game will be split into parts. Find the file called <strong>setup.exe</strong>.</li>
-      <li>Run <strong>setup.exe</strong>. If it asks to make a shortcut or install add-ons, check those options. Everything else is set automatically.</li>
+      <li>Once downloaded, find <strong>setup.exe</strong>.</li>
+      <li>Run <strong>setup.exe</strong>. Check options for shortcuts/add-ons. Everything else is automatic.</li>
     </ol>
   </div>
+</div>
 
-  <script>
-    function searchGames() {
-      let input = document.getElementById('searchBar').value.toLowerCase();
-      let lists = [document.getElementById('directList'), document.getElementById('torrentList')];
+<style>
+  .tab-content-games h1 { margin: 0 0 24px; color: var(--accent); text-align: center; }
+  .tab-content-games h2 { margin-top: 30px; color: var(--blue); border-bottom: 2px solid var(--blue); padding-bottom: 5px; font-size: 15px; }
+  .tab-content-games ul { list-style: none; margin: 0; padding: 0; }
+  .tab-content-games li { margin: 10px 0; padding: 10px; background: var(--surface-2); border-radius: var(--radius-sm); transition: background var(--transition); }
+  .tab-content-games li:hover { background: var(--surface-3); }
+  .tab-content-games a { color: #ffa502; font-weight: 700; text-decoration: none; }
+  .tab-content-games .note { color: var(--text-muted); font-size: .9em; margin-left: 6px; }
+  .tab-content-games .guide { background: var(--surface); padding: 20px; border-radius: var(--radius); margin-top: 40px; }
+  .tab-content-games .guide h2 { color: #ffa502; border-bottom-color: #ffa502; }
+  .tab-content-games .guide li { background: none; margin: 8px 0; padding: 0; color: var(--text-muted); }
+</style>
 
-      lists.forEach(list => {
-        let items = list.getElementsByTagName('li');
-        for (let i = 0; i < items.length; i++) {
-          let text = items[i].innerText.toLowerCase();
-          items[i].style.display = text.includes(input) ? "" : "none";
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+<script>
+  function searchGames() {
+    var input = document.getElementById('searchBar').value.toLowerCase();
+    ['directList','torrentList'].forEach(function(id) {
+      var items = document.getElementById(id).getElementsByTagName('li');
+      for (var i = 0; i < items.length; i++) {
+        items[i].style.display = items[i].innerText.toLowerCase().includes(input) ? '' : 'none';
+      }
+    });
+  }
+</script>

@@ -1,117 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Request</title>
-  <link rel="icon" href="../photo.png">
-  <link rel="stylesheet" href="../styles/dashboard.css">
-  <style>
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-    th { color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
-    .prompt-cell { white-space: pre-wrap; word-break: break-word; }
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    @media (max-width: 600px) {
-      body { padding: 14px; }
-      table { font-size: 13px; }
-      th, td { padding: 6px 8px; }
-      .table-wrap table { min-width: 450px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Request a custom website</h2>
-    <p class="coin-balance" id="requestCoinBalance">Website requests cost 50 coins.</p>
-    <div class="form-group">
-      <label for="Prompt">Describe what you want</label>
-      <textarea id="Prompt" rows="4" placeholder="Layout, theme, pages..."></textarea>
-    </div>
-    <button class="btn btn-primary" id="Btn">Submit</button>
-    <p class="status" id="Status"></p>
-    <div id="requestsList" style="margin-top:16px;" class="table-wrap"></div>
+<div>
+  <h2 style="font-size:15px;font-weight:600;margin:0 0 16px;">Request a custom website</h2>
+  <p class="coin-balance" id="requestCoinBalance">Website requests cost 50 coins.</p>
+  <div class="form-group">
+    <label for="Prompt">Describe what you want</label>
+    <textarea id="Prompt" rows="4" placeholder="Layout, theme, pages..."></textarea>
   </div>
+  <button class="btn btn-primary" id="Btn">Submit</button>
+  <p class="status" id="Status"></p>
+  <div id="requestsList" style="margin-top:16px;"></div>
+</div>
 
-  <script src="/scripts/SubTab.js"></script>
-  <script>
-    const token = sessionStorage.getItem('token');
-    let userCoins = null;
-    let userIsAdmin = false;
+<script>
+  var token = sessionStorage.getItem('token');
+  var API = 'https://apg-api.vercel.app';
+  var userCoins = null;
+  var userIsAdmin = false;
 
-    function updateSubmitState() {
-      const btn = document.getElementById('Btn');
-      if (userIsAdmin || userCoins === null || userCoins >= 50) {
-        btn.disabled = false;
-      } else {
-        btn.disabled = true;
-      }
-    }
+  function updateSubmitState() {
+    document.getElementById('Btn').disabled = !(userIsAdmin || userCoins === null || userCoins >= 50);
+  }
 
-    function loadCoinBalance() {
-      fetch('https://apg-api.vercel.app/api/check-session', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.status === 'authenticated') {
-          const user = data.user;
-          userIsAdmin = user.coins_infinite;
-          userCoins = user.coins;
-          document.getElementById('requestCoinBalance').innerText = userIsAdmin
-            ? 'Website requests: unlimited coins'
-            : 'Coins: ' + (user.coins || 0) + ' | Website requests cost 50 coins';
-          updateSubmitState();
-        }
-      });
-    }
-
-    function loadMyRequests() {
-      fetch('https://apg-api.vercel.app/api/requests', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-        .then(r => r.json())
-        .then(data => {
-          const wrap = document.getElementById('requestsList');
-          if (!data.length) { wrap.innerHTML = ''; return; }
-          let html = '<h3 style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Your requests</h3>';
-          html += '<table><thead><tr><th>Date</th><th>Type</th><th>Prompt</th><th>Status</th></tr></thead><tbody>';
-          data.forEach(r => {
-            html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + (r.type === 'challenge' ? 'Challenge' : 'Request') + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td></tr>';
-          });
-          html += '</tbody></table>';
-          wrap.innerHTML = html;
-        });
-    }
-
-    document.getElementById('Btn').addEventListener('click', () => {
-      const prompt = document.getElementById('Prompt').value.trim();
-      const s = document.getElementById('Status');
-      if (!prompt) { s.innerText = 'Write something.'; return; }
-      fetch('https://apg-api.vercel.app/api/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ prompt })
-      })
-      .then(r => r.json())
-      .then(d => {
-        s.innerText = d.roast || d.message;
-        if (d.status === 'success') {
-          document.getElementById('Prompt').value = '';
-          userCoins = d.coins;
-          userIsAdmin = d.coins_infinite;
-          document.getElementById('requestCoinBalance').innerText = d.coins_infinite
-            ? 'Website requests: unlimited coins'
-            : 'Coins: ' + (d.coins || 0) + ' | Website requests cost 50 coins';
-          updateSubmitState();
-        }
-        loadMyRequests();
-      })
-      .catch(() => { s.innerText = 'Network error.'; });
+  function loadCoinBalance() {
+    fetch(API + '/api/check-session', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status !== 'authenticated') return;
+      var user = data.user;
+      userIsAdmin = user.coins_infinite;
+      userCoins = user.coins;
+      document.getElementById('requestCoinBalance').innerText = userIsAdmin
+        ? 'Website requests: unlimited coins'
+        : 'Coins: ' + (user.coins || 0) + ' | Website requests cost 50 coins';
+      updateSubmitState();
     });
+  }
 
-    loadMyRequests();
-    loadCoinBalance();
-  </script>
-</body>
-</html>
+  function loadMyRequests() {
+    fetch(API + '/api/requests', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var wrap = document.getElementById('requestsList');
+      if (!data.length) { wrap.innerHTML = ''; return; }
+      var html = '<h3 style="font-size:13px;color:var(--text-muted);margin:0 0 8px;">Your requests</h3>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Prompt</th><th>Status</th></tr></thead><tbody>';
+      data.forEach(function(r) {
+        html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + (r.type === 'challenge' ? 'Challenge' : 'Request') + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      wrap.innerHTML = html;
+    });
+  }
+
+  document.getElementById('Btn').addEventListener('click', function() {
+    var prompt = document.getElementById('Prompt').value.trim();
+    var s = document.getElementById('Status');
+    if (!prompt) { s.innerText = 'Write something.'; return; }
+    fetch(API + '/api/requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ prompt: prompt })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      s.innerText = d.roast || d.message;
+      if (d.status === 'success') {
+        document.getElementById('Prompt').value = '';
+        userCoins = d.coins;
+        userIsAdmin = d.coins_infinite;
+        document.getElementById('requestCoinBalance').innerText = d.coins_infinite
+          ? 'Website requests: unlimited coins'
+          : 'Coins: ' + (d.coins || 0) + ' | Website requests cost 50 coins';
+        updateSubmitState();
+      }
+      loadMyRequests();
+    })
+    .catch(function() { s.innerText = 'Network error.'; });
+  });
+
+  loadMyRequests();
+  loadCoinBalance();
+</script>

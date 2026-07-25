@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AllProGamerz — Dashboard</title>
   <link rel="icon" href="photo.png">
+  <link rel="stylesheet" href="styles/base.css">
   <link rel="stylesheet" href="styles/dashboard.css">
 </head>
 <body>
-
   <header>
-    <h1>AP<span>G</span></h1>
-    <p id="greeting" style="font-size:14px;color:var(--text-muted);font-weight:400;"></p>
-    <button class="btn btn-danger" id="logoutBtn">Sign out</button>
+    <div class="logo">AP<span>G</span></div>
+    <p id="greeting" class="header-greeting"></p>
+    <button class="btn btn-danger btn-sm" id="logoutBtn">Sign out</button>
   </header>
 
   <nav class="tab-bar" id="tabBar">
     <button class="tab active" data-tab="games">Games</button>
     <button class="tab" data-tab="challenge">Challenge</button>
     <button class="tab" data-tab="prizes">Prizes</button>
+    <button class="tab" data-tab="chat">Chat</button>
     <button class="tab" data-tab="profile">Profile</button>
     <button class="tab" data-tab="request">Request</button>
     <button class="tab" data-tab="contact">Contact</button>
@@ -26,32 +27,32 @@
   </nav>
 
   <main id="mainWorkspace" class="container" style="display:none;">
-
-    <div id="nameReminder" style="display:none;background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;color:#eab308;">
-      Don't forget to add your <strong>First Name</strong> and <strong>Last Name</strong> in your <button class="tab-link" data-tab="profile" style="color:#eab308;font-weight:600;background:none;border:none;cursor:pointer;text-decoration:underline;">profile</button>!
+    <div id="nameReminder" class="name-reminder" style="display:none;">
+      Don't forget to add your <strong>First Name</strong> and <strong>Last Name</strong> in your
+      <button class="tab-link" data-tab="profile">profile</button>!
     </div>
-
     <div class="tab-panel active" id="panel-games"></div>
     <div class="tab-panel" id="panel-challenge"></div>
     <div class="tab-panel" id="panel-prizes"></div>
+    <div class="tab-panel" id="panel-chat"></div>
     <div class="tab-panel" id="panel-profile"></div>
     <div class="tab-panel" id="panel-request"></div>
     <div class="tab-panel" id="panel-contact"></div>
     <div class="tab-panel" id="panel-admin"></div>
-
   </main>
 
   <footer>&copy; 2026 AllProGamerz</footer>
 
   <script>
+    const API = 'https://apg-api.vercel.app';
     const TOKEN = sessionStorage.getItem('token');
-    console.log('[auth] token from sessionStorage:', TOKEN);
     if (!TOKEN) { location.href = 'login.html'; throw 'no session'; }
 
     const tabConfig = {
       games:     '/SubTabs/Games.html',
       challenge: '/SubTabs/Challenge.html',
       prizes:    '/SubTabs/Prizes.html',
+      chat:      '/SubTabs/Chat.html',
       profile:   '/SubTabs/Profile.html',
       request:   '/SubTabs/Request.html',
       contact:   '/SubTabs/Contact.html',
@@ -62,61 +63,39 @@
     let currentTab = null;
 
     async function loadTab(name, panel) {
-      const response = await fetch(tabConfig[name]);
-      if (!response.ok) throw new Error('Unable to load ' + name + ' tab');
-
-      const markup = await response.text();
-      const tabDocument = new DOMParser().parseFromString(markup, 'text/html');
+      const res = await fetch(tabConfig[name]);
+      if (!res.ok) throw new Error('Unable to load ' + name);
+      const markup = await res.text();
+      const doc = new DOMParser().parseFromString(markup, 'text/html');
       const content = document.createElement('div');
       content.className = 'tab-content tab-content-' + name;
-
-      Array.from(tabDocument.body.childNodes)
-        .filter(node => node.nodeName !== 'SCRIPT')
-        .forEach(node => content.appendChild(document.importNode(node, true)));
-
+      Array.from(doc.body.childNodes)
+        .filter(n => n.nodeName !== 'SCRIPT')
+        .forEach(n => content.appendChild(document.importNode(n, true)));
       panel.replaceChildren(content);
-
-      tabDocument.querySelectorAll('script:not([src])').forEach(source => {
-        const script = document.createElement('script');
-        script.textContent = source.textContent
+      doc.querySelectorAll('script:not([src])').forEach(src => {
+        const s = document.createElement('script');
+        s.textContent = src.textContent
           .replace(/const token\s*=/g, 'var token =')
           .replace(/function switchTab\s*\(/g, 'function adminSwitchTab(')
           .replace(/\bswitchTab\(/g, 'adminSwitchTab(');
-        panel.appendChild(script);
+        panel.appendChild(s);
       });
-
       loaded[name] = true;
     }
 
     async function switchTab(name) {
       if (name === currentTab) return;
-
       const oldPanel = currentTab ? document.getElementById('panel-' + currentTab) : null;
       const newPanel = document.getElementById('panel-' + name);
       if (!newPanel) return;
-
-      document.querySelectorAll('.tab').forEach(t =>
-        t.classList.toggle('active', t.dataset.tab === name)
-      );
-
-      if (oldPanel) {
-        oldPanel.classList.add('exiting');
-        oldPanel.addEventListener('animationend', () => {
-          oldPanel.classList.remove('active', 'exiting');
-        }, { once: true });
-      }
-
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+      if (oldPanel) oldPanel.classList.remove('active');
       newPanel.classList.add('active');
-
       if (!loaded[name] && tabConfig[name]) {
-        try {
-          await loadTab(name, newPanel);
-        } catch (error) {
-          newPanel.innerHTML = '<div class="tab-content"><p class="status">Unable to load this tab.</p></div>';
-          console.error(error);
-        }
+        try { await loadTab(name, newPanel); }
+        catch (e) { newPanel.innerHTML = '<p class="status">Unable to load this tab.</p>'; }
       }
-
       currentTab = name;
       history.replaceState(null, '', '#' + name);
     }
@@ -125,22 +104,17 @@
       const btn = e.target.closest('.tab');
       if (btn) switchTab(btn.dataset.tab);
     });
-
     document.querySelectorAll('.tab-link').forEach(link => {
       link.addEventListener('click', () => switchTab(link.dataset.tab));
     });
-
     document.getElementById('logoutBtn').addEventListener('click', () => {
       sessionStorage.removeItem('token');
       location.href = 'login.html';
     });
 
-    fetch('https://apg-api.vercel.app/api/check-session', {
-      headers: { 'Authorization': 'Bearer ' + TOKEN }
-    })
+    fetch(API + '/api/check-session', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
       .then(r => r.json())
       .then(data => {
-        console.log('[auth] /api/me response:', data);
         if (data.status !== 'success' && data.status !== 'authenticated') {
           sessionStorage.removeItem('token');
           location.href = 'login.html';
@@ -148,26 +122,17 @@
         }
         const user = data.user;
         window.authenticatedUser = user;
-
         document.getElementById('greeting').innerText = 'Hello ' + (user.firstName || '') + '!';
         document.getElementById('mainWorkspace').style.display = '';
-
-        if (!user.firstName || !user.lastName) {
-          document.getElementById('nameReminder').style.display = '';
-        }
-        if (user.is_admin) {
-          document.getElementById('adminTab').style.display = '';
-        }
-
+        if (!user.firstName || !user.lastName) document.getElementById('nameReminder').style.display = '';
+        if (user.is_admin) document.getElementById('adminTab').style.display = '';
         const hash = location.hash.slice(1);
         switchTab(hash && tabConfig[hash] ? hash : 'games');
       })
-      .catch((err) => {
-        console.error('[auth] /api/me fetch failed:', err);
+      .catch(() => {
         sessionStorage.removeItem('token');
         location.href = 'login.html';
       });
   </script>
-
 </body>
 </html>
