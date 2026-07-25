@@ -3,6 +3,15 @@
   <p class="coin-balance" id="coinBalance">Coins: loading...</p>
 
   <div class="section">
+    <div id="notifReminder" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+      <p style="font-size:13px;margin:0 0 8px;font-weight:500;">Enable notifications</p>
+      <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px;">Get pinged when someone messages you or a new message drops in chat.</p>
+      <button class="btn btn-primary btn-sm" id="enableNotifBtn">Enable notifications</button>
+      <p class="status" id="notifStatus"></p>
+    </div>
+  </div>
+
+  <div class="section">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
       <button class="btn btn-ghost btn-sm" id="generateInviteBtn">Generate invite link</button>
       <p class="status" id="inviteStatus"></p>
@@ -25,6 +34,10 @@
       <div class="form-group">
         <label>Custom status</label>
         <input type="text" id="editCustomStatus" placeholder="What's on your mind?" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="editDisplayName" placeholder="Username" maxlength="30">
       </div>
       <div class="form-group">
         <label>Email</label>
@@ -105,10 +118,11 @@
       if (data.status !== 'success' && data.status !== 'authenticated') return;
       var u = data.user;
       document.getElementById('profileInfo').innerHTML =
-        'Name: ' + (u.firstName || '') + ' ' + (u.lastName || '') + '<br>Email: ' + u.email + '<br>Verified: ' + (u.verified ? 'yes' : 'no');
+        'Name: ' + (u.firstName || '') + ' ' + (u.lastName || '') + '<br>Username: @' + (u.username || '') + '<br>Email: ' + u.email + '<br>Verified: ' + (u.verified ? 'yes' : 'no');
       document.getElementById('editEmail').value = u.email;
       document.getElementById('editFirstName').value = u.firstName || '';
       document.getElementById('editLastName').value = u.lastName || '';
+      document.getElementById('editDisplayName').value = u.username || '';
       document.getElementById('editCustomStatus').value = u.custom_status || '';
       document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
       if (u.is_admin) document.getElementById('showRemoveAdminBtn').style.display = '';
@@ -157,13 +171,14 @@
     var fn = document.getElementById('editFirstName').value.trim();
     var ln = document.getElementById('editLastName').value.trim();
     var cs = document.getElementById('editCustomStatus').value.trim();
+    var dn = document.getElementById('editDisplayName').value.trim();
     var curPass = document.getElementById('editCurrentPass').value;
     var newPass = document.getElementById('editNewPass').value;
     var s = document.getElementById('editStatus');
     if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
     if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
     s.innerText = 'Saving...';
-    var body = { firstName: fn, lastName: ln, custom_status: cs };
+    var body = { firstName: fn, lastName: ln, custom_status: cs, display_name: dn };
     if (newPass) { body.current_password = curPass; body.new_password = newPass; }
     fetch(API + '/api/update-profile', {
       method: 'PUT',
@@ -184,4 +199,16 @@
 
   populateProfileUI();
   loadInvites();
+
+  document.getElementById('enableNotifBtn').addEventListener('click', function() {
+    var s = document.getElementById('notifStatus');
+    if (!('Notification' in window)) { s.innerText = 'Notifications not supported in this browser.'; return; }
+    Notification.requestPermission().then(function(perm) {
+      if (perm === 'granted') { s.innerText = 'Notifications enabled!'; }
+      else { s.innerText = 'Permission denied. Enable in browser settings.'; }
+    });
+  });
+  if ('Notification' in window && Notification.permission === 'granted') {
+    document.getElementById('notifStatus').innerText = 'Notifications are enabled.';
+  }
 </script>

@@ -9,14 +9,19 @@
       firstname: document.getElementById('firstName').value.trim(),
       lastname: document.getElementById('lastName').value.trim(),
       email: document.getElementById('email').value.trim(),
+      display_name: document.getElementById('displayName').value.trim(),
       phonenumber: document.getElementById('phone').value.trim(),
       password: document.getElementById('password').value
     };
 
     if (inviteCode) payload.invite_code = inviteCode;
 
-    if (!payload.firstname || !payload.lastname || !payload.email || !payload.phonenumber || !payload.password) {
+    if (!payload.firstname || !payload.lastname || !payload.email || !payload.display_name || !payload.phonenumber || !payload.password) {
       status.innerText = 'Fill in all fields.';
+      return;
+    }
+    if (payload.display_name.length < 3) {
+      status.innerText = 'Username must be at least 3 characters.';
       return;
     }
     if (payload.password.length < 8) {

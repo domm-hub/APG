@@ -97,17 +97,17 @@
           if (lastText.length > 30) lastText = lastText.substring(0, 30) + '...';
         }
         var badge = c.unread > 0 ? '<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:auto;">' + c.unread + '</span>' : '';
-        div.innerHTML = '<div style="display:flex;align-items:center;width:100%;">' + statusDot + '<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:13px;">' + escHtml(c.other_user.name) + '</div>' + (c.other_user.custom_status ? '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(c.other_user.custom_status) + '</div>' : '') + '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(lastText) + '</div></div>' + badge + '</div>';
-        div.addEventListener('click', function() { openDM(c.id, c.other_user.name, c.other_user.id); });
+        div.innerHTML = '<div style="display:flex;align-items:center;width:100%;">' + statusDot + '<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:13px;">' + escHtml(c.other_user.name) + ' <span style="font-size:11px;color:var(--text-muted);font-weight:400;">@' + escHtml(c.other_user.username) + '</span></div>' + (c.other_user.custom_status ? '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(c.other_user.custom_status) + '</div>' : '') + '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(lastText) + '</div></div>' + badge + '</div>';
+        div.addEventListener('click', function() { openDM(c.id, c.other_user.name, c.other_user.username, c.other_user.id); });
         list.appendChild(div);
       });
     })
     .catch(function() { list.innerHTML = '<p style="color:var(--accent);font-size:13px;padding:12px;">Failed to load.</p>'; });
   }
 
-  function openDM(convoId, otherName, otherId) {
+  function openDM(convoId, otherName, otherUsername, otherId) {
     currentConvoId = convoId;
-    document.getElementById('dmTitle').innerText = otherName;
+    document.getElementById('dmTitle').innerHTML = escHtml(otherName) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">@' + escHtml(otherUsername) + '</span>';
     dmView('chat');
     loadDMMessages(true);
     fetch(API + '/api/dm/markRead', {
@@ -143,7 +143,7 @@
         if (m.sender_id === myId) {
           readMark = m.read ? '<span style="font-size:10px;color:var(--green);margin-left:6px;" title="Seen">&#10003;&#10003;</span>' : '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">&#10003;</span>';
         }
-        div.innerHTML = '<div class="chat-msg-text">' + escHtml(m.content) + '</div><div class="chat-msg-time">' + time + readMark + '</div>';
+        div.innerHTML = '<div style="display:flex;align-items:center;"><span class="chat-msg-sender">' + escHtml(m.sender) + ' <span style="font-size:10px;color:var(--text-muted);font-weight:400;">@' + escHtml(m.username) + '</span></span></div><div class="chat-msg-text">' + escHtml(m.content) + '</div><div class="chat-msg-time">' + time + readMark + '</div>';
         wrap.appendChild(div);
       });
       var wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 50;
@@ -222,7 +222,7 @@
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.status === 'success' && d.conversation) {
-          openDM(d.conversation.id, d.conversation.other_user.name, d.conversation.other_user.id);
+          openDM(d.conversation.id, d.conversation.other_user.name, d.conversation.other_user.username, d.conversation.other_user.id);
           loadConversations();
         } else {
           s.innerText = d.message || 'Failed.';

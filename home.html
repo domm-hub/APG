@@ -172,7 +172,7 @@
         }
         const user = data.user;
         window.authenticatedUser = user;
-        document.getElementById('greeting').innerText = 'Hello ' + (user.firstName || '') + '!';
+        document.getElementById('greeting').innerText = 'Hello ' + (user.firstName || '') + ' (@' + (user.username || '') + ')!';
         document.getElementById('mainWorkspace').style.display = '';
         if (!user.firstName || !user.lastName) document.getElementById('nameReminder').style.display = '';
         if (user.is_admin) document.getElementById('adminTab').style.display = '';
