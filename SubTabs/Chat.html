@@ -1,57 +1,94 @@
-<div>
-  <h2 style="font-size:15px;font-weight:600;margin:0 0 16px;">Chat</h2>
-
-  <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;">
-    <button class="btn btn-ghost btn-sm" id="chatNavGroups">Groups</button>
-    <button class="btn btn-ghost btn-sm" id="chatNavCreate">Create Group</button>
-    <button class="btn btn-ghost btn-sm" id="chatNavJoin">Join Group</button>
+<div class="chat-layout">
+  <div class="chat-sidebar" id="chatSidebar">
+    <div class="chat-sidebar-header">
+      <h2 style="font-size:15px;font-weight:600;margin:0;">Chat</h2>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-icon" id="chatNavCreate" title="Create group">+</button>
+        <button class="btn-icon" id="chatNavJoin" title="Join by code">&#128269;</button>
+      </div>
+    </div>
+    <div id="chatGroupList" class="chat-group-list">
+      <p style="color:var(--text-muted);font-size:13px;padding:12px;">Loading...</p>
+    </div>
   </div>
 
-  <div id="chatGroups">
-    <p style="color:var(--text-muted);font-size:13px;">Loading groups...</p>
+  <div class="chat-main" id="chatMain">
+    <div id="chatWelcome" class="chat-welcome">
+      <p style="color:var(--text-muted);font-size:14px;">Select a group or create a new one to start chatting.</p>
+    </div>
+
+    <div id="chatCreate" style="display:none;padding:20px;">
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 16px;">Create Group</h3>
+      <div class="form-group">
+        <label>Group name</label>
+        <input type="text" id="newGroupName" placeholder="e.g. Squad Lobby" maxlength="50">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="newGroupDesc" placeholder="What's this group about?">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <input type="checkbox" id="newGroupPublic" checked style="width:auto;display:inline;">
+        <label for="newGroupPublic" style="margin:0;display:inline;">Public (anyone can find it)</label>
+      </div>
+      <button class="btn btn-primary" id="createGroupBtn">Create group</button>
+      <p class="status" id="createGroupStatus"></p>
+    </div>
+
+    <div id="chatJoin" style="display:none;padding:20px;">
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 16px;">Join Group</h3>
+      <div class="form-group">
+        <label>Invite code</label>
+        <input type="text" id="joinGroupCode" placeholder="Paste invite code here">
+      </div>
+      <button class="btn btn-primary" id="joinGroupBtn">Join</button>
+      <p class="status" id="joinGroupStatus"></p>
+    </div>
+
+    <div id="chatWindow" style="display:none;" class="chat-window-wrap">
+      <div class="chat-window-header">
+        <div>
+          <h3 style="font-size:14px;font-weight:600;margin:0;" id="chatTitle">Group</h3>
+          <div id="chatMembers" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" id="chatInviteBtn" title="Get invite code">&#128279;</button>
+          <button class="btn btn-ghost btn-sm" id="chatAddBtn" title="Add member">+</button>
+          <button class="btn btn-ghost btn-sm" id="chatBackBtn" title="Leave chat">&larr;</button>
+        </div>
+      </div>
+      <div class="chat-messages-area" id="chatMessages">
+        <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>
+      </div>
+      <div class="chat-input-bar">
+        <input type="text" id="chatInput" placeholder="Type a message...">
+        <button class="btn btn-primary btn-sm" id="chatSendBtn">Send</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="loadMoreBtn" style="display:none;margin:4px auto;">Load older messages</button>
+    </div>
   </div>
 
-  <div id="chatCreate" style="display:none;">
-    <div class="form-group">
-      <label>Group name</label>
-      <input type="text" id="newGroupName" placeholder="e.g. Squad Lobby" maxlength="50">
+  <div id="chatInviteModal" class="chat-modal" style="display:none;">
+    <div class="chat-modal-box">
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 12px;">Invite to group</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Share this code with friends to let them join:</p>
+      <div id="chatInviteCode" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-family:monospace;font-size:16px;text-align:center;word-break:break-all;margin-bottom:12px;cursor:pointer;" title="Click to copy"></div>
+      <p class="status" id="chatInviteStatus"></p>
+      <button class="btn btn-ghost btn-sm" id="chatInviteClose">Close</button>
     </div>
-    <div class="form-group">
-      <label>Description</label>
-      <input type="text" id="newGroupDesc" placeholder="What's this group about?">
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-      <input type="checkbox" id="newGroupPublic" checked style="width:auto;display:inline;">
-      <label for="newGroupPublic" style="margin:0;display:inline;">Public (anyone can find it)</label>
-    </div>
-    <button class="btn btn-primary" id="createGroupBtn">Create group</button>
-    <p class="status" id="createGroupStatus"></p>
   </div>
 
-  <div id="chatJoin" style="display:none;">
-    <div class="form-group">
-      <label>Group name to join</label>
-      <input type="text" id="joinGroupName" placeholder="Exact group name">
+  <div id="chatAddModal" class="chat-modal" style="display:none;">
+    <div class="chat-modal-box">
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 12px;">Add member</h3>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="chatAddUsername" placeholder="Enter username">
+      </div>
+      <button class="btn btn-primary btn-sm" id="chatAddConfirm">Add</button>
+      <p class="status" id="chatAddStatus"></p>
+      <button class="btn btn-ghost btn-sm" id="chatAddClose" style="margin-top:8px;">Close</button>
     </div>
-    <button class="btn btn-primary" id="joinGroupBtn">Find &amp; Join</button>
-    <p class="status" id="joinGroupStatus"></p>
-  </div>
-
-  <div id="chatWindow" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <h3 style="font-size:14px;font-weight:600;margin:0;" id="chatTitle">Group</h3>
-      <button class="btn btn-ghost btn-sm" id="chatBackBtn">&larr; Back</button>
-    </div>
-    <div id="chatMembers" style="font-size:12px;color:var(--text-muted);margin-bottom:12px;"></div>
-    <div id="chatMessages" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:200px;max-height:400px;overflow-y:auto;margin-bottom:12px;">
-      <p style="color:var(--text-muted);font-size:13px;text-align:center;">No messages yet.</p>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" id="chatInput" placeholder="Type a message..." style="flex:1;padding:10px 14px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);outline:none;font-family:inherit;">
-      <button class="btn btn-primary btn-sm" id="chatSendBtn">Send</button>
-    </div>
-    <p class="status" id="chatStatus"></p>
-    <button class="btn btn-ghost btn-sm" id="loadMoreBtn" style="margin-top:8px;display:none;">Load older messages</button>
   </div>
 </div>
 
@@ -60,46 +97,57 @@
   var token = sessionStorage.getItem('token');
   var API = 'https://apg-api.vercel.app';
   var currentGroupId = null;
+  var currentGroupCode = null;
   var chatOffset = 0;
   var chatPollTimer = null;
 
+  function escHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
   function chatView(view) {
-    ['chatGroups','chatCreate','chatJoin','chatWindow'].forEach(function(id) {
+    ['chatWelcome','chatCreate','chatJoin','chatWindow'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
-    var target = document.getElementById(view === 'groups' ? 'chatGroups' : view === 'create' ? 'chatCreate' : view === 'join' ? 'chatJoin' : 'chatWindow');
+    var map = { welcome: 'chatWelcome', create: 'chatCreate', join: 'chatJoin', chat: 'chatWindow' };
+    var target = document.getElementById(map[view]);
     if (target) target.style.display = '';
-    if (view === 'groups') loadGroups();
     if (view !== 'chat' && chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
   }
 
   function loadGroups() {
-    var wrap = document.getElementById('chatGroups');
+    var wrap = document.getElementById('chatGroupList');
     if (!wrap) return;
-    wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Loading...</p>';
+    wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px;">Loading...</p>';
     fetch(API + '/api/chat/listGroups', { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!Array.isArray(data) || !data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No groups yet. Create one or join with a group name.</p>'; return; }
+      if (!Array.isArray(data) || !data.length) {
+        wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px;">No groups yet.<br>Tap + to create one.</p>';
+        return;
+      }
       wrap.innerHTML = '';
       data.forEach(function(g) {
         var div = document.createElement('div');
-        div.className = 'chat-group-item';
-        div.innerHTML = '<div><div class="chat-group-name">' + escHtml(g.name) + '</div><div class="chat-group-desc">' + escHtml(g.description || '') + '</div></div>' +
-          '<span class="chat-group-badge">' + (g.public ? 'Public' : 'Private') + '</span>';
-        div.addEventListener('click', function() { openChat(g.id, g.name); });
+        div.className = 'chat-sidebar-item' + (g.id === currentGroupId ? ' active' : '');
+        var badge = g.public ? '' : '<span style="font-size:10px;color:var(--text-muted);">&#128274;</span>';
+        div.innerHTML = '<div style="font-weight:500;font-size:13px;">' + escHtml(g.name) + badge + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + escHtml(g.description || '') + '</div>';
+        div.addEventListener('click', function() { openChat(g.id, g.name, g.code); });
         wrap.appendChild(div);
       });
     })
-    .catch(function() { wrap.innerHTML = '<p style="color:var(--accent);font-size:13px;">Failed to load groups.</p>'; });
+    .catch(function() { wrap.innerHTML = '<p style="color:var(--accent);font-size:13px;padding:12px;">Failed to load.</p>'; });
   }
 
-  function openChat(groupId, groupName) {
+  function openChat(groupId, groupName, groupCode) {
     currentGroupId = groupId;
+    currentGroupCode = groupCode || null;
     chatOffset = 0;
-    var title = document.getElementById('chatTitle');
-    if (title) title.innerText = groupName;
+    document.getElementById('chatTitle').innerText = groupName;
     chatView('chat');
     loadChatMembers(groupId);
     loadMessages(true);
@@ -112,9 +160,12 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.status !== 'success' || !d.group) return;
-      var names = (d.group.members || []).map(function(m) { return m.username; });
-      var el = document.getElementById('chatMembers');
-      if (el) el.innerText = 'Members: ' + names.join(', ');
+      var names = (d.group.members || []).map(function(m) {
+        var full = ((m.firstName || '') + ' ' + (m.lastName || '')).trim();
+        return full || m.username;
+      });
+      document.getElementById('chatMembers').innerText = names.join(', ');
+      if (d.group.code) currentGroupCode = d.group.code;
     });
   }
 
@@ -128,7 +179,7 @@
       var wrap = document.getElementById('chatMessages');
       if (!wrap) return;
       if (isInitial) wrap.innerHTML = '';
-      if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;">No messages yet.</p>'; return; }
+      if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>'; return; }
       if (isInitial) {
         d.messages.forEach(function(m) { wrap.appendChild(buildMsg(m)); });
         wrap.scrollTop = wrap.scrollHeight;
@@ -193,32 +244,15 @@
     });
   }
 
-  function escHtml(s) {
-    var div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-  }
-
   setTimeout(function() {
-    var navGroups = document.getElementById('chatNavGroups');
-    var navCreate = document.getElementById('chatNavCreate');
-    var navJoin = document.getElementById('chatNavJoin');
-    var backBtn = document.getElementById('chatBackBtn');
-    var sendBtn = document.getElementById('chatSendBtn');
-    var chatInput = document.getElementById('chatInput');
-    var loadMore = document.getElementById('loadMoreBtn');
-    var createBtn = document.getElementById('createGroupBtn');
-    var joinBtn = document.getElementById('joinGroupBtn');
+    document.getElementById('chatNavCreate').addEventListener('click', function() { chatView('create'); });
+    document.getElementById('chatNavJoin').addEventListener('click', function() { chatView('join'); });
+    document.getElementById('chatBackBtn').addEventListener('click', function() { chatView('welcome'); currentGroupId = null; loadGroups(); });
+    document.getElementById('chatSendBtn').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
+    document.getElementById('loadMoreBtn').addEventListener('click', function() { loadOlderMessages(); });
 
-    if (navGroups) navGroups.addEventListener('click', function() { chatView('groups'); });
-    if (navCreate) navCreate.addEventListener('click', function() { chatView('create'); });
-    if (navJoin) navJoin.addEventListener('click', function() { chatView('join'); });
-    if (backBtn) backBtn.addEventListener('click', function() { chatView('groups'); });
-    if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-    if (chatInput) chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
-    if (loadMore) loadMore.addEventListener('click', function() { loadOlderMessages(); });
-
-    if (createBtn) createBtn.addEventListener('click', function() {
+    document.getElementById('createGroupBtn').addEventListener('click', function() {
       var name = document.getElementById('newGroupName').value.trim();
       var desc = document.getElementById('newGroupDesc').value.trim();
       var pub = document.getElementById('newGroupPublic').checked;
@@ -236,34 +270,115 @@
         if (d.status === 'success') {
           document.getElementById('newGroupName').value = '';
           document.getElementById('newGroupDesc').value = '';
-          chatView('groups');
+          loadGroups();
+          if (d.group_id) openChat(d.group_id, name, d.code);
         }
       })
       .catch(function() { s.innerText = 'Network error.'; });
     });
 
-    if (joinBtn) joinBtn.addEventListener('click', function() {
-      var name = document.getElementById('joinGroupName').value.trim();
+    document.getElementById('joinGroupBtn').addEventListener('click', function() {
+      var code = document.getElementById('joinGroupCode').value.trim();
       var s = document.getElementById('joinGroupStatus');
-      if (!name) { s.innerText = 'Enter a group name.'; return; }
-      s.innerText = 'Looking up group...';
-      fetch(API + '/api/chat/getGroupId?name=' + encodeURIComponent(name), { headers: { 'Authorization': 'Bearer ' + token } })
+      if (!code) { s.innerText = 'Enter an invite code.'; return; }
+      s.innerText = 'Joining...';
+      fetch(API + '/api/chat/joinByCode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ code: code })
+      })
       .then(function(r) { return r.json(); })
       .then(function(d) {
-        if (d.status !== 'success') { s.innerText = d.message; return; }
-        fetch(API + '/api/chat/group', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ group_id: d.group_id })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-          s.innerText = res.message || 'Joined!';
-          if (res.status === 'success') { setTimeout(function() { openChat(d.group_id, name); }, 500); }
-        });
+        s.innerText = d.message;
+        if (d.status === 'success') {
+          document.getElementById('joinGroupCode').value = '';
+          loadGroups();
+          if (d.group_id) setTimeout(function() { openChat(d.group_id, d.group_name); }, 500);
+        }
       })
       .catch(function() { s.innerText = 'Network error.'; });
     });
+
+    document.getElementById('chatInviteBtn').addEventListener('click', function() {
+      if (currentGroupCode) {
+        document.getElementById('chatInviteCode').innerText = currentGroupCode;
+        document.getElementById('chatInviteStatus').innerText = '';
+        document.getElementById('chatInviteModal').style.display = '';
+      } else {
+        fetch(API + '/api/chat/getGroupCode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ group_id: currentGroupId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.status === 'success') {
+            currentGroupCode = d.code;
+            document.getElementById('chatInviteCode').innerText = d.code;
+            document.getElementById('chatInviteStatus').innerText = '';
+            document.getElementById('chatInviteModal').style.display = '';
+          }
+        });
+      }
+    });
+
+    document.getElementById('chatInviteCode').addEventListener('click', function() {
+      var code = this.innerText;
+      if (code && navigator.clipboard) {
+        navigator.clipboard.writeText(code);
+        document.getElementById('chatInviteStatus').innerText = 'Copied!';
+      }
+    });
+
+    document.getElementById('chatInviteClose').addEventListener('click', function() {
+      document.getElementById('chatInviteModal').style.display = 'none';
+    });
+
+    document.getElementById('chatAddBtn').addEventListener('click', function() {
+      document.getElementById('chatAddUsername').value = '';
+      document.getElementById('chatAddStatus').innerText = '';
+      document.getElementById('chatAddModal').style.display = '';
+    });
+
+    document.getElementById('chatAddConfirm').addEventListener('click', function() {
+      var username = document.getElementById('chatAddUsername').value.trim();
+      var s = document.getElementById('chatAddStatus');
+      if (!username) { s.innerText = 'Enter a username.'; return; }
+      s.innerText = 'Adding...';
+      fetch(API + '/api/chat/group', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ group_id: currentGroupId, add_user: username })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        s.innerText = d.message;
+        if (d.status === 'success') {
+          document.getElementById('chatAddUsername').value = '';
+          loadChatMembers(currentGroupId);
+        }
+      })
+      .catch(function() { s.innerText = 'Network error.'; });
+    });
+
+    document.getElementById('chatAddClose').addEventListener('click', function() {
+      document.getElementById('chatAddModal').style.display = 'none';
+    });
+
+    document.getElementById('chatWelcome').addEventListener('click', function() {
+      chatView('welcome');
+    });
+
+    var hash = window.location.hash;
+    if (hash.indexOf('join=') !== -1) {
+      var joinCode = hash.split('join=')[1];
+      if (joinCode) {
+        document.getElementById('joinGroupCode').value = joinCode;
+        chatView('join');
+        document.getElementById('joinGroupBtn').click();
+        history.replaceState(null, '', '#chat');
+      }
+    }
 
     loadGroups();
   }, 0);
