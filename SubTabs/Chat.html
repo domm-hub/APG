@@ -125,7 +125,7 @@
     var map = { welcome: 'chatWelcome', create: 'chatCreate', join: 'chatJoin', chat: 'chatWindow' };
     var target = document.getElementById(map[view]);
     if (target) target.style.display = '';
-    if (view !== 'chat' && chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+    if (view !== 'chat' && chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
   }
 
   function loadGroups() {
@@ -168,11 +168,21 @@
     loadMessages(true);
     if (currentGroupType === 'community') loadChannels(groupId);
     else { document.getElementById('channelBar').style.display = 'none'; }
-    if (chatPollTimer) clearInterval(chatPollTimer);
-    chatPollTimer = setInterval(function() {
-      loadMessages(false);
-      pollTyping();
-    }, 3000);
+    if (chatPollTimer) clearTimeout(chatPollTimer);
+    startChatPoll();
+  }
+
+  function startChatPoll() {
+    if (!currentGroupId) return;
+    var delay = document.hidden ? 10000 : 1000;
+    chatPollTimer = setTimeout(function() {
+      if (!currentGroupId) return;
+      if (!document.hidden) {
+        loadMessages(false);
+        pollTyping();
+      }
+      startChatPoll();
+    }, delay);
   }
 
   function loadChannels(groupId) {

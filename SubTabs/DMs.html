@@ -65,7 +65,7 @@
     var map = { welcome: 'dmWelcome', newChat: 'dmNew', chat: 'dmChatWindow' };
     var target = document.getElementById(map[view]);
     if (target) target.style.display = '';
-    if (view !== 'chat' && dmPollTimer) { clearInterval(dmPollTimer); dmPollTimer = null; }
+    if (view !== 'chat' && dmPollTimer) { clearTimeout(dmPollTimer); dmPollTimer = null; }
   }
 
   function online(lastSeen) {
@@ -115,10 +115,22 @@
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ conversation_id: convoId })
     });
-    if (dmPollTimer) clearInterval(dmPollTimer);
-    dmPollTimer = setInterval(function() { loadDMMessages(false); }, 4000);
+    if (dmPollTimer) clearTimeout(dmPollTimer);
+    startDmPoll();
     var badge = document.getElementById('dmBadge');
     if (badge) { badge.style.display = 'none'; badge.innerText = ''; }
+  }
+
+  function startDmPoll() {
+    if (!currentConvoId) return;
+    var delay = document.hidden ? 10000 : 1000;
+    dmPollTimer = setTimeout(function() {
+      if (!currentConvoId) return;
+      if (!document.hidden) {
+        loadDMMessages(false);
+      }
+      startDmPoll();
+    }, delay);
   }
 
   function loadDMMessages(isInitial) {
