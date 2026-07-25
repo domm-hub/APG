@@ -23,6 +23,10 @@
         <input type="text" id="editLastName" placeholder="Last name">
       </div>
       <div class="form-group">
+        <label>Custom status</label>
+        <input type="text" id="editCustomStatus" placeholder="What's on your mind?" maxlength="100">
+      </div>
+      <div class="form-group">
         <label>Email</label>
         <input type="email" id="editEmail" disabled>
       </div>
@@ -105,6 +109,7 @@
       document.getElementById('editEmail').value = u.email;
       document.getElementById('editFirstName').value = u.firstName || '';
       document.getElementById('editLastName').value = u.lastName || '';
+      document.getElementById('editCustomStatus').value = u.custom_status || '';
       document.getElementById('coinBalance').innerText = u.coins_infinite ? 'Coins: unlimited' : 'Coins: ' + (u.coins || 0);
       if (u.is_admin) document.getElementById('showRemoveAdminBtn').style.display = '';
     });
@@ -151,13 +156,14 @@
   document.getElementById('saveProfileBtn').addEventListener('click', function() {
     var fn = document.getElementById('editFirstName').value.trim();
     var ln = document.getElementById('editLastName').value.trim();
+    var cs = document.getElementById('editCustomStatus').value.trim();
     var curPass = document.getElementById('editCurrentPass').value;
     var newPass = document.getElementById('editNewPass').value;
     var s = document.getElementById('editStatus');
     if (!fn || !ln) { s.innerText = 'First and last name are required.'; return; }
     if (newPass && !curPass) { s.innerText = 'Enter current password to change password.'; return; }
     s.innerText = 'Saving...';
-    var body = { firstName: fn, lastName: ln };
+    var body = { firstName: fn, lastName: ln, custom_status: cs };
     if (newPass) { body.current_password = curPass; body.new_password = newPass; }
     fetch(API + '/api/update-profile', {
       method: 'PUT',

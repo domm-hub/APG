@@ -12,7 +12,10 @@
   <header>
     <div class="logo">AP<span>G</span></div>
     <p id="greeting" class="header-greeting"></p>
-    <button class="btn btn-danger btn-sm" id="logoutBtn">Sign out</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn-icon" id="themeToggle" title="Toggle theme" style="font-size:14px;">&#9790;</button>
+      <button class="btn btn-danger btn-sm" id="logoutBtn">Sign out</button>
+    </div>
   </header>
 
   <nav class="tab-bar" id="tabBar">
@@ -20,6 +23,7 @@
     <button class="tab" data-tab="challenge">Challenge</button>
     <button class="tab" data-tab="prizes">Prizes</button>
     <button class="tab" data-tab="chat">Chat</button>
+    <button class="tab" data-tab="dm">DMs <span id="dmBadge" style="display:none;background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></button>
     <button class="tab" data-tab="profile">Profile</button>
     <button class="tab" data-tab="request">Request</button>
     <button class="tab" data-tab="contact">Contact</button>
@@ -35,6 +39,7 @@
     <div class="tab-panel" id="panel-challenge"></div>
     <div class="tab-panel" id="panel-prizes"></div>
     <div class="tab-panel" id="panel-chat"></div>
+    <div class="tab-panel" id="panel-dm"></div>
     <div class="tab-panel" id="panel-profile"></div>
     <div class="tab-panel" id="panel-request"></div>
     <div class="tab-panel" id="panel-contact"></div>
@@ -53,6 +58,7 @@
       challenge: '/SubTabs/Challenge.html',
       prizes:    '/SubTabs/Prizes.html',
       chat:      '/SubTabs/Chat.html',
+      dm:        '/SubTabs/DMs.html',
       profile:   '/SubTabs/Profile.html',
       request:   '/SubTabs/Request.html',
       contact:   '/SubTabs/Contact.html',
@@ -111,6 +117,50 @@
       sessionStorage.removeItem('token');
       location.href = 'login.html';
     });
+
+    // Theme toggle
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('themeToggle').innerHTML = next === 'dark' ? '&#9790;' : '&#9788;';
+    });
+    if (savedTheme === 'light') document.getElementById('themeToggle').innerHTML = '&#9788;';
+
+    // Heartbeat
+    setInterval(() => {
+      fetch(API + '/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + TOKEN }
+      }).catch(() => {});
+    }, 30000);
+    fetch(API + '/api/heartbeat', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    }).catch(() => {});
+
+    // Push notifications
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    // DM unread badge polling
+    setInterval(() => {
+      fetch(API + '/api/dm/unread', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+        .then(r => r.json())
+        .then(d => {
+          const badge = document.getElementById('dmBadge');
+          if (d.unread > 0) {
+            badge.style.display = '';
+            badge.innerText = d.unread;
+          } else {
+            badge.style.display = 'none';
+          }
+        }).catch(() => {});
+    }, 10000);
 
     fetch(API + '/api/check-session', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
       .then(r => r.json())

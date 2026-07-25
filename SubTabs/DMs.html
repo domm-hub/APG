@@ -1,0 +1,239 @@
+<div class="chat-layout">
+  <div class="chat-sidebar" id="dmSidebar">
+    <div class="chat-sidebar-header">
+      <h2 style="font-size:15px;font-weight:600;margin:0;">Messages</h2>
+      <button class="btn-icon" id="dmNewBtn" title="New message">&#9998;</button>
+    </div>
+    <div id="dmList" class="chat-group-list">
+      <p style="color:var(--text-muted);font-size:13px;padding:12px;">Loading...</p>
+    </div>
+  </div>
+
+  <div class="chat-main" id="dmMain">
+    <div id="dmWelcome" class="chat-welcome">
+      <p style="color:var(--text-muted);font-size:14px;">Select a conversation or start a new one.</p>
+    </div>
+
+    <div id="dmNew" style="display:none;padding:20px;">
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 16px;">New message</h3>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="dmNewUsername" placeholder="@username">
+      </div>
+      <button class="btn btn-primary btn-sm" id="dmNewGo">Start</button>
+      <p class="status" id="dmNewStatus"></p>
+    </div>
+
+    <div id="dmChatWindow" style="display:none;" class="chat-window-wrap">
+      <div class="chat-window-header">
+        <div>
+          <h3 style="font-size:14px;font-weight:600;margin:0;" id="dmTitle">User</h3>
+          <div id="dmStatus" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="dmBackBtn" title="Back">&larr;</button>
+      </div>
+      <div class="chat-messages-area" id="dmMessages">
+        <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>
+      </div>
+      <div id="dmTypingIndicator" style="padding:4px 16px;font-size:11px;color:var(--text-muted);min-height:20px;flex-shrink:0;"></div>
+      <div class="chat-input-bar">
+        <input type="text" id="dmInput" placeholder="Type a message...">
+        <button class="btn btn-primary btn-sm" id="dmSendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var token = sessionStorage.getItem('token');
+  var API = 'https://apg-api.vercel.app';
+  var currentConvoId = null;
+  var dmPollTimer = null;
+
+  function escHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function dmView(view) {
+    ['dmWelcome','dmNew','dmChatWindow'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    var map = { welcome: 'dmWelcome', newChat: 'dmNew', chat: 'dmChatWindow' };
+    var target = document.getElementById(map[view]);
+    if (target) target.style.display = '';
+    if (view !== 'chat' && dmPollTimer) { clearInterval(dmPollTimer); dmPollTimer = null; }
+  }
+
+  function online(lastSeen) {
+    if (!lastSeen) return false;
+    var diff = (Date.now() - new Date(lastSeen).getTime()) / 1000;
+    return diff < 60;
+  }
+
+  function loadConversations() {
+    var list = document.getElementById('dmList');
+    if (!list) return;
+    list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px;">Loading...</p>';
+    fetch(API + '/api/dm/conversations', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(convos) {
+      if (!Array.isArray(convos) || !convos.length) {
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px;">No conversations yet.<br>Tap &#9998; to start one.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      convos.forEach(function(c) {
+        var div = document.createElement('div');
+        div.className = 'chat-sidebar-item' + (c.id === currentConvoId ? ' active' : '');
+        var isOnline = online(c.other_user.last_seen);
+        var statusDot = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + (isOnline ? 'var(--green)' : 'var(--text-muted)') + ';margin-right:6px;"></span>';
+        var lastText = '';
+        if (c.last_message) {
+          lastText = c.last_message.content;
+          if (lastText.length > 30) lastText = lastText.substring(0, 30) + '...';
+        }
+        var badge = c.unread > 0 ? '<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:auto;">' + c.unread + '</span>' : '';
+        div.innerHTML = '<div style="display:flex;align-items:center;width:100%;">' + statusDot + '<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:13px;">' + escHtml(c.other_user.name) + '</div>' + (c.other_user.custom_status ? '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(c.other_user.custom_status) + '</div>' : '') + '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(lastText) + '</div></div>' + badge + '</div>';
+        div.addEventListener('click', function() { openDM(c.id, c.other_user.name, c.other_user.id); });
+        list.appendChild(div);
+      });
+    })
+    .catch(function() { list.innerHTML = '<p style="color:var(--accent);font-size:13px;padding:12px;">Failed to load.</p>'; });
+  }
+
+  function openDM(convoId, otherName, otherId) {
+    currentConvoId = convoId;
+    document.getElementById('dmTitle').innerText = otherName;
+    dmView('chat');
+    loadDMMessages(true);
+    fetch(API + '/api/dm/markRead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ conversation_id: convoId })
+    });
+    if (dmPollTimer) clearInterval(dmPollTimer);
+    dmPollTimer = setInterval(function() { loadDMMessages(false); }, 4000);
+    var badge = document.getElementById('dmBadge');
+    if (badge) { badge.style.display = 'none'; badge.innerText = ''; }
+  }
+
+  function loadDMMessages(isInitial) {
+    if (!currentConvoId) return;
+    fetch(API + '/api/dm/messages?conversation_id=' + currentConvoId + '&limit=50', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.status !== 'success') return;
+      var wrap = document.getElementById('dmMessages');
+      if (!wrap) return;
+      if (isInitial) wrap.innerHTML = '';
+      if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>'; return; }
+      var myId = window.authenticatedUser.id;
+      d.messages.forEach(function(m) {
+        if (document.getElementById('dm-msg-' + m.id)) return;
+        var div = document.createElement('div');
+        div.className = 'chat-msg' + (m.sender_id === myId ? ' chat-msg-own' : '');
+        div.id = 'dm-msg-' + m.id;
+        var t = new Date(m.sent_at);
+        var time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var readMark = '';
+        if (m.sender_id === myId) {
+          readMark = m.read ? '<span style="font-size:10px;color:var(--green);margin-left:6px;" title="Seen">&#10003;&#10003;</span>' : '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">&#10003;</span>';
+        }
+        div.innerHTML = '<div class="chat-msg-text">' + escHtml(m.content) + '</div><div class="chat-msg-time">' + time + readMark + '</div>';
+        wrap.appendChild(div);
+      });
+      var wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 50;
+      if (wasAtBottom) wrap.scrollTop = wrap.scrollHeight;
+      if (!isInitial && d.messages.length > 0 && !document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+        var last = d.messages[d.messages.length - 1];
+        if (last && last.sender_id !== myId && !last.read) {
+          new Notification('New message from ' + document.getElementById('dmTitle').innerText, { body: last.content, icon: 'photo.png' });
+        }
+      }
+      fetch(API + '/api/dm/markRead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ conversation_id: currentConvoId })
+      });
+    });
+  }
+
+  function sendDM() {
+    var input = document.getElementById('dmInput');
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    fetch(API + '/api/dm/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ conversation_id: currentConvoId, message: text })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.status === 'success' && d.message) {
+        var wrap = document.getElementById('dmMessages');
+        if (wrap) {
+          if (document.querySelector('#dmWelcome') && document.getElementById('dmWelcome').style.display !== 'none') return;
+          var placeholder = wrap.querySelector('p');
+          if (placeholder && placeholder.textContent.indexOf('No messages') !== -1) placeholder.remove();
+          var div = document.createElement('div');
+          div.className = 'chat-msg chat-msg-own';
+          div.id = 'dm-msg-' + d.message.id;
+          var t = new Date(d.message.sent_at);
+          var time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          div.innerHTML = '<div class="chat-msg-text">' + escHtml(d.message.content) + '</div><div class="chat-msg-time">' + time + ' <span style="font-size:10px;color:var(--text-muted);">&#10003;</span></div>';
+          wrap.appendChild(div);
+          wrap.scrollTop = wrap.scrollHeight;
+        }
+      }
+    });
+  }
+
+  setTimeout(function() {
+    document.getElementById('dmNewBtn').addEventListener('click', function() {
+      document.getElementById('dmNewUsername').value = '';
+      document.getElementById('dmNewStatus').innerText = '';
+      dmView('newChat');
+    });
+    document.getElementById('dmBackBtn').addEventListener('click', function() {
+      currentConvoId = null;
+      dmView('welcome');
+      loadConversations();
+    });
+    document.getElementById('dmSendBtn').addEventListener('click', sendDM);
+    document.getElementById('dmInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendDM();
+    });
+    document.getElementById('dmNewGo').addEventListener('click', function() {
+      var username = document.getElementById('dmNewUsername').value.trim().replace('@', '');
+      var s = document.getElementById('dmNewStatus');
+      if (!username) { s.innerText = 'Enter a username.'; return; }
+      s.innerText = 'Starting...';
+      fetch(API + '/api/dm/conversation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ username: username })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.status === 'success' && d.conversation) {
+          openDM(d.conversation.id, d.conversation.other_user.name, d.conversation.other_user.id);
+          loadConversations();
+        } else {
+          s.innerText = d.message || 'Failed.';
+        }
+      })
+      .catch(function() { s.innerText = 'Network error.'; });
+    });
+
+    loadConversations();
+  }, 0);
+
+  window.dmView = dmView;
+})();
+</script>
