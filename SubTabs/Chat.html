@@ -53,7 +53,6 @@
       <div class="chat-window-header">
         <div>
           <h3 style="font-size:14px;font-weight:600;margin:0;" id="chatTitle">Group</h3>
-          <div id="chatMembers" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
         </div>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-ghost btn-sm" id="chatInviteBtn" title="Get invite code">&#128279;</button>
@@ -71,6 +70,10 @@
         <button class="btn btn-primary btn-sm" id="chatSendBtn">Send</button>
       </div>
       <button class="btn btn-ghost btn-sm" id="loadMoreBtn" style="display:none;margin:4px auto;">Load older messages</button>
+    </div>
+    <div id="chatMembersPanel" class="chat-members-panel">
+      <div class="chat-members-header">Members</div>
+      <div id="chatMembersList" class="chat-members-list"></div>
     </div>
   </div>
 
@@ -161,6 +164,8 @@
     var map = { welcome: 'chatWelcome', create: 'chatCreate', join: 'chatJoin', chat: 'chatWindow' };
     var target = document.getElementById(map[view]);
     if (target) target.style.display = '';
+    var panel = document.getElementById('chatMembersPanel');
+    if (panel) panel.classList.toggle('visible', view === 'chat');
     if (view !== 'chat' && chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
   }
 
@@ -279,12 +284,45 @@
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (d.status !== 'success' || !d.group) return;
-      var names = (d.group.members || []).map(function(m) {
-        var full = ((m.firstName || '') + ' ' + (m.lastName || '')).trim();
-        return (full || m.username) + ' (@' + m.username + ')';
-      });
-      document.getElementById('chatMembers').innerText = names.join(', ');
+      var members = d.group.members || [];
       if (d.group.code) currentGroupCode = d.group.code;
+      var list = document.getElementById('chatMembersList');
+      if (!list) return;
+      list.innerHTML = '';
+      var myId = window.authenticatedUser.id;
+      var online = [];
+      var offline = [];
+      members.forEach(function(m) {
+        var isOnline = m.last_seen && (Date.now() - new Date(m.last_seen).getTime()) < 60000;
+        var full = ((m.firstName || '') + ' ' + (m.lastName || '')).trim() || m.username;
+        var initial = full.charAt(0).toUpperCase();
+        var isCreator = m.username === d.group.creator;
+        var item = document.createElement('div');
+        item.className = 'chat-members-item';
+        var dotColor = isOnline ? 'var(--green)' : 'var(--text-muted)';
+        item.innerHTML = '<div class="chat-members-avatar" style="background:hsl(' + (m.id * 37 % 360) + ',50%,40%);">' + escHtml(initial) + '</div>' +
+          '<div class="chat-members-info">' +
+            '<div class="chat-members-name">' + escHtml(full) + (isCreator ? ' <span class="chat-members-crown" title="Group owner">&#9733;</span>' : '') + '</div>' +
+            '<div class="chat-members-handle">@' + escHtml(m.username) + '</div>' +
+            (m.custom_status ? '<div class="chat-members-status">' + escHtml(m.custom_status) + '</div>' : '') +
+          '</div>' +
+          '<div class="chat-members-dot" style="background:' + dotColor + ';" title="' + (isOnline ? 'Online' : 'Offline') + '"></div>';
+        (isOnline ? online : offline).push(item);
+      });
+      if (online.length > 0) {
+        var label = document.createElement('div');
+        label.className = 'chat-members-label';
+        label.innerText = 'Online \u2014 ' + online.length;
+        list.appendChild(label);
+        online.forEach(function(el) { list.appendChild(el); });
+      }
+      if (offline.length > 0) {
+        var label2 = document.createElement('div');
+        label2.className = 'chat-members-label';
+        label2.innerText = 'Offline \u2014 ' + offline.length;
+        list.appendChild(label2);
+        offline.forEach(function(el) { list.appendChild(el); });
+      }
     });
   }
 
