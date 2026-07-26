@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APG — Chat</title>
+  <link rel="icon" href="photo.png">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <style>
+    body { padding: 0; }
+    .standalone-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .standalone-header .logo { font-size: 18px; }
+    .standalone-header .nav-links { display: flex; gap: 8px; align-items: center; }
+    .standalone-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      overflow: hidden;
+    }
+    .standalone-body .chat-layout {
+      height: calc(100vh - 52px);
+    }
+  </style>
+</head>
+<body>
+  <div class="standalone-header">
+    <a href="home.html" class="logo" style="text-decoration:none;">AP<span>G</span></a>
+    <div class="nav-links">
+      <button class="btn-icon" id="themeToggle" title="Toggle theme" style="font-size:14px;">&#9790;</button>
+      <a href="home.html" class="btn btn-ghost btn-sm">Dashboard</a>
+      <button class="btn btn-danger btn-sm" id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+  <div class="standalone-body" id="chatRoot">
+    <p style="color:var(--text-muted);text-align:center;padding:40px;">Loading...</p>
+  </div>
+
+  <script>
+    const API = 'https://apg-api.vercel.app';
+    const TOKEN = sessionStorage.getItem('token');
+    if (!TOKEN) { location.href = 'login.html'; throw 'no session'; }
+
+    // Theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('themeToggle').innerHTML = next === 'dark' ? '&#9790;' : '&#9788;';
+    });
+    if (savedTheme === 'light') document.getElementById('themeToggle').innerHTML = '&#9788;';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('token');
+      location.href = 'login.html';
+    });
+
+    // Heartbeat
+    setInterval(() => {
+      fetch(API + '/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + TOKEN }
+      }).catch(() => {});
+    }, 30000);
+    fetch(API + '/api/heartbeat', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    }).catch(() => {});
+
+    // Auth + load chat
+    fetch(API + '/api/check-session', { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status !== 'success' && data.status !== 'authenticated') {
+          sessionStorage.removeItem('token');
+          location.href = 'login.html';
+          return;
+        }
+        const user = data.user;
+        window.authenticatedUser = user;
+        loadChat();
+      })
+      .catch(() => {
+        sessionStorage.removeItem('token');
+        location.href = 'login.html';
+      });
+
+    async function loadChat() {
+      const res = await fetch('SubTabs/Chat.html');
+      const markup = await res.text();
+      const doc = new DOMParser().parseFromString(markup, 'text/html');
+      const root = document.getElementById('chatRoot');
+      root.innerHTML = '';
+      Array.from(doc.body.childNodes)
+        .filter(n => n.nodeName !== 'SCRIPT')
+        .forEach(n => root.appendChild(document.importNode(n, true)));
+      doc.querySelectorAll('script:not([src])').forEach(src => {
+        const s = document.createElement('script');
+        s.textContent = src.textContent
+          .replace(/const token\s*=/g, 'var token =')
+          .replace(/function switchTab\s*\(/g, 'function adminSwitchTab(')
+          .replace(/\bswitchTab\(/g, 'adminSwitchTab(');
+        root.appendChild(s);
+      });
+    }
+  </script>
+</body>
+</html>

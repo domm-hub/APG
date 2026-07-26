@@ -577,7 +577,7 @@
     });
 
     function showInviteModal(code) {
-      var link = window.location.origin + '/#chat?join=' + code;
+      var link = window.location.origin + '/chat.html?join=' + code;
       document.getElementById('chatInviteLink').innerText = link;
       document.getElementById('chatInviteCode').innerText = code;
       document.getElementById('chatInviteStatus').innerText = '';
@@ -698,15 +698,19 @@
       document.getElementById('chatChannelModal').style.display = 'none';
     });
 
+    var joinCode = null;
     var hash = window.location.hash;
-    if (hash.indexOf('join=') !== -1) {
-      var joinCode = hash.split('join=')[1];
-      if (joinCode) {
-        document.getElementById('joinGroupCode').value = joinCode;
-        chatView('join');
-        document.getElementById('joinGroupBtn').click();
-        history.replaceState(null, '', '#chat');
-      }
+    var search = window.location.search;
+    if (search.indexOf('join=') !== -1) {
+      joinCode = search.split('join=')[1].split('&')[0];
+    } else if (hash.indexOf('join=') !== -1) {
+      joinCode = hash.split('join=')[1];
+    }
+    if (joinCode) {
+      document.getElementById('joinGroupCode').value = joinCode;
+      chatView('join');
+      document.getElementById('joinGroupBtn').click();
+      history.replaceState(null, '', window.location.pathname);
     }
 
     loadGroups();
