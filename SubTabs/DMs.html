@@ -35,7 +35,7 @@
       <div class="chat-messages-area" id="dmMessages">
         <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>
       </div>
-      <div id="dmTypingIndicator" style="padding:4px 16px;font-size:11px;color:var(--text-muted);min-height:20px;flex-shrink:0;"></div>
+      <div id="dmTypingIndicator" class="typing-indicator"></div>
       <div class="chat-input-bar">
         <input type="text" id="dmInput" placeholder="Type a message...">
         <button class="btn btn-primary btn-sm" id="dmSendBtn">Send</button>
@@ -50,11 +50,24 @@
   var API = 'https://apg-api.vercel.app';
   var currentConvoId = null;
   var dmPollTimer = null;
+  var lastSender = null;
+  var lastTime = null;
 
   function escHtml(s) {
     var d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
+  }
+
+  function formatTime(sentAt) {
+    var t = new Date(sentAt);
+    var now = new Date();
+    var diffMs = now - t;
+    var diffDays = Math.floor(diffMs / 86400000);
+    var timeStr = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (diffDays === 0) return 'Today at ' + timeStr;
+    if (diffDays === 1) return 'Yesterday at ' + timeStr;
+    return t.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
   }
 
   function dmView(view) {
@@ -66,6 +79,13 @@
     var target = document.getElementById(map[view]);
     if (target) target.style.display = '';
     if (view !== 'chat' && dmPollTimer) { clearTimeout(dmPollTimer); dmPollTimer = null; }
+  }
+
+  function highlightActiveConvo() {
+    var items = document.querySelectorAll('#dmList .chat-sidebar-item');
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle('active', items[i].dataset.convoId == currentConvoId);
+    }
   }
 
   function online(lastSeen) {
@@ -89,15 +109,17 @@
       convos.forEach(function(c) {
         var div = document.createElement('div');
         div.className = 'chat-sidebar-item' + (c.id === currentConvoId ? ' active' : '');
+        div.dataset.convoId = c.id;
         var isOnline = online(c.other_user.last_seen);
-        var statusDot = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + (isOnline ? 'var(--green)' : 'var(--text-muted)') + ';margin-right:6px;"></span>';
+        var statusDot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (isOnline ? 'var(--green)' : 'var(--text-muted)') + ';margin-right:8px;flex-shrink:0;"></span>';
         var lastText = '';
         if (c.last_message) {
           lastText = c.last_message.content;
           if (lastText.length > 30) lastText = lastText.substring(0, 30) + '...';
         }
-        var badge = c.unread > 0 ? '<span style="background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:auto;">' + c.unread + '</span>' : '';
-        div.innerHTML = '<div style="display:flex;align-items:center;width:100%;">' + statusDot + '<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:13px;">' + escHtml(c.other_user.name) + ' <span style="font-size:11px;color:var(--text-muted);font-weight:400;">@' + escHtml(c.other_user.username) + '</span></div>' + (c.other_user.custom_status ? '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(c.other_user.custom_status) + '</div>' : '') + '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(lastText) + '</div></div>' + badge + '</div>';
+        var badge = c.unread > 0 ? '<span class="unread-badge">' + c.unread + '</span>' : '';
+        var statusLine = c.other_user.custom_status ? '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(c.other_user.custom_status) + '</div>' : '';
+        div.innerHTML = '<div style="display:flex;align-items:center;width:100%;">' + statusDot + '<div style="flex:1;min-width:0;"><div style="font-weight:500;font-size:13px;">' + escHtml(c.other_user.name) + ' <span style="font-size:11px;color:var(--text-muted);font-weight:400;">@' + escHtml(c.other_user.username) + '</span></div>' + statusLine + '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(lastText) + '</div></div>' + badge + '</div>';
         div.addEventListener('click', function() { openDM(c.id, c.other_user.name, c.other_user.username, c.other_user.id); });
         list.appendChild(div);
       });
@@ -107,8 +129,11 @@
 
   function openDM(convoId, otherName, otherUsername, otherId) {
     currentConvoId = convoId;
+    lastSender = null;
+    lastTime = null;
     document.getElementById('dmTitle').innerHTML = escHtml(otherName) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">@' + escHtml(otherUsername) + '</span>';
     dmView('chat');
+    highlightActiveConvo();
     loadDMMessages(true);
     fetch(API + '/api/dm/markRead', {
       method: 'POST',
@@ -141,29 +166,37 @@
       if (d.status !== 'success') return;
       var wrap = document.getElementById('dmMessages');
       if (!wrap) return;
-      if (isInitial) wrap.innerHTML = '';
+      if (isInitial) { wrap.innerHTML = ''; lastSender = null; lastTime = null; }
       if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>'; return; }
       var myId = window.authenticatedUser.id;
       d.messages.forEach(function(m) {
         if (document.getElementById('dm-msg-' + m.id)) return;
+        var grouped = m.sender === lastSender && lastTime && (new Date(m.sent_at) - new Date(lastTime)) < 300000;
+        var isOwn = m.sender_id === myId;
         var div = document.createElement('div');
-        div.className = 'chat-msg' + (m.sender_id === myId ? ' chat-msg-own' : '');
         div.id = 'dm-msg-' + m.id;
-        var t = new Date(m.sent_at);
-        var time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        var readMark = '';
-        if (m.sender_id === myId) {
-          readMark = m.read ? '<span style="font-size:10px;color:var(--green);margin-left:6px;" title="Seen">&#10003;&#10003;</span>' : '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">&#10003;</span>';
+        var cls = 'chat-msg';
+        if (isOwn) cls += ' chat-msg-own';
+        div.className = cls;
+        if (grouped) {
+          div.innerHTML = '<div class="chat-msg-text">' + escHtml(m.content) + '</div>';
+        } else {
+          var readMark = '';
+          if (isOwn) {
+            readMark = m.read ? '<span style="font-size:10px;color:var(--green);margin-left:6px;" title="Seen">&#10003;&#10003;</span>' : '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">&#10003;</span>';
+          }
+          div.innerHTML = '<div class="chat-msg-header"><span class="chat-msg-sender">' + escHtml(m.sender) + '</span><span class="chat-msg-username">@' + escHtml(m.username) + '</span><span class="chat-msg-time">' + formatTime(m.sent_at) + '</span>' + readMark + '</div><div class="chat-msg-text">' + escHtml(m.content) + '</div>';
         }
-        div.innerHTML = '<div style="display:flex;align-items:center;"><span class="chat-msg-sender">' + escHtml(m.sender) + ' <span style="font-size:10px;color:var(--text-muted);font-weight:400;">@' + escHtml(m.username) + '</span></span></div><div class="chat-msg-text">' + escHtml(m.content) + '</div><div class="chat-msg-time">' + time + readMark + '</div>';
         wrap.appendChild(div);
+        lastSender = m.sender;
+        lastTime = m.sent_at;
       });
       var wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 50;
       if (wasAtBottom) wrap.scrollTop = wrap.scrollHeight;
       if (!isInitial && d.messages.length > 0 && !document.hidden && 'Notification' in window && Notification.permission === 'granted') {
         var last = d.messages[d.messages.length - 1];
         if (last && last.sender_id !== myId && !last.read) {
-          new Notification('New message from ' + document.getElementById('dmTitle').innerText, { body: last.content, icon: 'photo.png' });
+          new Notification('New message from ' + last.sender, { body: last.content, icon: 'photo.png' });
         }
       }
       fetch(API + '/api/dm/markRead', {
@@ -180,6 +213,7 @@
     var text = input.value.trim();
     if (!text) return;
     input.value = '';
+    input.focus();
     fetch(API + '/api/dm/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -190,16 +224,20 @@
       if (d.status === 'success' && d.message) {
         var wrap = document.getElementById('dmMessages');
         if (wrap) {
-          if (document.querySelector('#dmWelcome') && document.getElementById('dmWelcome').style.display !== 'none') return;
           var placeholder = wrap.querySelector('p');
           if (placeholder && placeholder.textContent.indexOf('No messages') !== -1) placeholder.remove();
+          var grouped = d.message.sender === lastSender && lastTime && (new Date(d.message.sent_at) - new Date(lastTime)) < 300000;
           var div = document.createElement('div');
           div.className = 'chat-msg chat-msg-own';
           div.id = 'dm-msg-' + d.message.id;
-          var t = new Date(d.message.sent_at);
-          var time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          div.innerHTML = '<div class="chat-msg-text">' + escHtml(d.message.content) + '</div><div class="chat-msg-time">' + time + ' <span style="font-size:10px;color:var(--text-muted);">&#10003;</span></div>';
+          if (grouped) {
+            div.innerHTML = '<div class="chat-msg-text">' + escHtml(d.message.content) + '</div>';
+          } else {
+            div.innerHTML = '<div class="chat-msg-header"><span class="chat-msg-sender">' + escHtml(d.message.sender) + '</span><span class="chat-msg-time">' + formatTime(d.message.sent_at) + ' <span style="font-size:10px;color:var(--text-muted);">&#10003;</span></span></div><div class="chat-msg-text">' + escHtml(d.message.content) + '</div>';
+          }
           wrap.appendChild(div);
+          lastSender = d.message.sender;
+          lastTime = d.message.sent_at;
           wrap.scrollTop = wrap.scrollHeight;
         }
       }

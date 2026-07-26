@@ -61,11 +61,11 @@
           <button class="btn btn-ghost btn-sm" id="chatBackBtn" title="Leave chat">&larr;</button>
         </div>
       </div>
-      <div id="channelBar" style="display:none;border-bottom:1px solid var(--border);padding:8px 16px;display:none;gap:6px;flex-wrap:wrap;flex-shrink:0;"></div>
+      <div id="channelBar" class="channel-bar"></div>
       <div class="chat-messages-area" id="chatMessages">
         <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>
       </div>
-      <div id="typingIndicator" style="padding:4px 16px;font-size:11px;color:var(--text-muted);min-height:20px;flex-shrink:0;"></div>
+      <div id="typingIndicator" class="typing-indicator"></div>
       <div class="chat-input-bar">
         <input type="text" id="chatInput" placeholder="Type a message...">
         <button class="btn btn-primary btn-sm" id="chatSendBtn">Send</button>
@@ -127,11 +127,30 @@
   var chatPollTimer = null;
   var typingTimer = null;
   var lastMsgCount = 0;
+  var lastMsgSender = null;
+  var lastMsgTime = null;
 
   function escHtml(s) {
     var d = document.createElement('div');
     d.textContent = s;
     return d.innerHTML;
+  }
+
+  function formatTime(sentAt) {
+    var t = new Date(sentAt);
+    var now = new Date();
+    var diffMs = now - t;
+    var diffDays = Math.floor(diffMs / 86400000);
+    var timeStr = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (diffDays === 0) return 'Today at ' + timeStr;
+    if (diffDays === 1) return 'Yesterday at ' + timeStr;
+    return t.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
+  }
+
+  function isWithinGroupTime(sentAt, minutes) {
+    if (!lastMsgTime) return false;
+    var diff = new Date(sentAt) - new Date(lastMsgTime);
+    return diff < minutes * 60000;
   }
 
   function chatView(view) {
@@ -145,7 +164,14 @@
     if (view !== 'chat' && chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
   }
 
-  function loadGroups() {
+  function highlightActiveGroup() {
+    var items = document.querySelectorAll('#chatGroupList .chat-sidebar-item');
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle('active', items[i].dataset.groupId == currentGroupId);
+    }
+  }
+
+  function loadGroups(callback) {
     var wrap = document.getElementById('chatGroupList');
     if (!wrap) return;
     wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:12px;">Loading...</p>';
@@ -160,6 +186,7 @@
       data.forEach(function(g) {
         var div = document.createElement('div');
         div.className = 'chat-sidebar-item' + (g.id === currentGroupId ? ' active' : '');
+        div.dataset.groupId = g.id;
         var icons = '';
         if (!g.public) icons += '<span style="font-size:10px;">&#128274;</span> ';
         if (g.group_type === 'community') icons += '<span style="font-size:10px;">#</span> ';
@@ -168,6 +195,7 @@
         div.addEventListener('click', function() { openChat(g.id, g.name, g.code, g.group_type); });
         wrap.appendChild(div);
       });
+      if (callback) callback();
     })
     .catch(function() { wrap.innerHTML = '<p style="color:var(--accent);font-size:13px;padding:12px;">Failed to load.</p>'; });
   }
@@ -179,8 +207,11 @@
     currentChannelId = null;
     chatOffset = 0;
     lastMsgCount = 0;
+    lastMsgSender = null;
+    lastMsgTime = null;
     document.getElementById('chatTitle').innerText = groupName;
     chatView('chat');
+    highlightActiveGroup();
     loadChatMembers(groupId);
     loadMessages(true);
     if (currentGroupType === 'community') loadChannels(groupId);
@@ -209,36 +240,38 @@
     .then(function(chs) {
       if (!Array.isArray(chs) || !chs.length) { bar.style.display = 'none'; return; }
       bar.style.display = 'flex';
-      bar.innerHTML = '<span style="font-size:11px;color:var(--text-muted);font-weight:600;">Channels:</span>';
-      var addChBtn = document.createElement('button');
-      addChBtn.className = 'btn btn-ghost btn-sm';
-      addChBtn.style.cssText = 'font-size:11px;padding:3px 8px;';
-      addChBtn.innerText = '+';
-      addChBtn.title = 'New channel';
-      addChBtn.addEventListener('click', function() {
+      bar.innerHTML = '';
+      var allBtn = document.createElement('button');
+      allBtn.className = 'channel-pill' + (!currentChannelId ? ' active' : '');
+      allBtn.innerText = '#general';
+      allBtn.addEventListener('click', function() { currentChannelId = null; setActiveChannel(this); loadMessages(true); });
+      bar.appendChild(allBtn);
+      chs.forEach(function(ch) {
+        if (ch.name === 'general') return;
+        var btn = document.createElement('button');
+        btn.className = 'channel-pill' + (currentChannelId === ch.id ? ' active' : '');
+        btn.innerText = '#' + ch.name;
+        btn.addEventListener('click', function() { currentChannelId = ch.id; setActiveChannel(this); loadChannelMessages(ch.id, true); });
+        bar.appendChild(btn);
+      });
+      var addBtn = document.createElement('button');
+      addBtn.className = 'channel-pill add-channel';
+      addBtn.innerText = '+';
+      addBtn.title = 'New channel';
+      addBtn.addEventListener('click', function() {
         document.getElementById('chatChannelName').value = '';
         document.getElementById('chatChannelDesc').value = '';
         document.getElementById('chatChannelStatus').innerText = '';
         document.getElementById('chatChannelModal').style.display = '';
       });
-      bar.appendChild(addChBtn);
-      var allBtn = document.createElement('button');
-      allBtn.className = 'btn btn-ghost btn-sm';
-      allBtn.style.cssText = 'font-size:11px;padding:3px 8px;';
-      allBtn.innerText = '#general';
-      if (!currentChannelId) allBtn.style.borderColor = 'var(--accent)';
-      allBtn.addEventListener('click', function() { currentChannelId = null; loadMessages(true); });
-      bar.appendChild(allBtn);
-      chs.forEach(function(ch) {
-        var btn = document.createElement('button');
-        btn.className = 'btn btn-ghost btn-sm';
-        btn.style.cssText = 'font-size:11px;padding:3px 8px;';
-        btn.innerText = '#' + ch.name;
-        if (currentChannelId === ch.id) btn.style.borderColor = 'var(--accent)';
-        btn.addEventListener('click', function() { currentChannelId = ch.id; loadChannelMessages(ch.id, true); });
-        bar.appendChild(btn);
-      });
+      bar.appendChild(addBtn);
     }).catch(function() { bar.style.display = 'none'; });
+  }
+
+  function setActiveChannel(activeBtn) {
+    var pills = document.querySelectorAll('#channelBar .channel-pill');
+    for (var i = 0; i < pills.length; i++) pills[i].classList.remove('active');
+    activeBtn.classList.add('active');
   }
 
   function loadChatMembers(groupId) {
@@ -257,7 +290,7 @@
 
   function loadMessages(isInitial) {
     if (!currentGroupId || currentChannelId) return;
-    if (isInitial) chatOffset = 0;
+    if (isInitial) { chatOffset = 0; lastMsgSender = null; lastMsgTime = null; }
     fetch(API + '/api/chat/getMessages?group_id=' + currentGroupId + '&limit=50&offset=' + chatOffset, { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -267,13 +300,28 @@
       if (isInitial) wrap.innerHTML = '';
       if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>'; return; }
       if (isInitial) {
-        d.messages.forEach(function(m) { wrap.appendChild(buildMsg(m)); });
+        var prevSender = null;
+        var prevTime = null;
+        d.messages.forEach(function(m, i) {
+          var grouped = m.sender === prevSender && i > 0 && prevTime && (new Date(m.sent_at) - new Date(prevTime)) < 300000;
+          wrap.appendChild(buildMsg(m, grouped));
+          prevSender = m.sender;
+          prevTime = m.sent_at;
+        });
+        lastMsgSender = prevSender;
+        lastMsgTime = prevTime;
         wrap.scrollTop = wrap.scrollHeight;
       } else {
         var wasAtBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 50;
         var count = 0;
         d.messages.forEach(function(m) {
-          if (!document.getElementById('msg-' + m.id)) { wrap.appendChild(buildMsg(m)); count++; }
+          if (!document.getElementById('msg-' + m.id)) {
+            var grouped = m.sender === lastMsgSender && lastMsgTime && (new Date(m.sent_at) - new Date(lastMsgTime)) < 300000;
+            wrap.appendChild(buildMsg(m, grouped));
+            lastMsgSender = m.sender;
+            lastMsgTime = m.sent_at;
+            count++;
+          }
         });
         if (count && wasAtBottom) wrap.scrollTop = wrap.scrollHeight;
         if (count > 0 && !document.hidden && 'Notification' in window && Notification.permission === 'granted') {
@@ -305,30 +353,42 @@
       if (!wrap) return;
       if (isInitial) wrap.innerHTML = '';
       if (!d.messages.length && isInitial) { wrap.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0;">No messages yet.</p>'; return; }
-      d.messages.forEach(function(m) { wrap.appendChild(buildMsg(m)); });
+      var prevSender = null;
+      var prevTime = null;
+      d.messages.forEach(function(m, i) {
+        var grouped = m.sender === prevSender && i > 0 && prevTime && (new Date(m.sent_at) - new Date(prevTime)) < 300000;
+        wrap.appendChild(buildMsg(m, grouped));
+        prevSender = m.sender;
+        prevTime = m.sent_at;
+      });
       wrap.scrollTop = wrap.scrollHeight;
     });
   }
 
-  function buildMsg(m) {
+  function buildMsg(m, grouped) {
     var div = document.createElement('div');
-    div.className = 'chat-msg';
     div.id = 'msg-' + m.id;
-    var t = new Date(m.sent_at);
-    var time = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var isOwn = m.sender === (window.authenticatedUser || {}).firstName;
     if (m.message_type === 'join' || m.message_type === 'leave') {
       div.className = 'chat-msg chat-msg-system';
-      div.innerHTML = '<span style="font-size:12px;color:var(--text-muted);font-style:italic;">' + escHtml(m.content) + '</span>';
+      div.innerHTML = '<span class="chat-msg-text">' + escHtml(m.content) + '</span>';
     } else {
+      var cls = 'chat-msg';
+      if (isOwn) cls += ' chat-msg-own';
+      div.className = cls;
       var readCheck = '';
       if (m.read_by && m.read_by.length > 0) {
         readCheck = '<span style="font-size:10px;color:var(--green);margin-left:6px;" title="Seen by ' + m.read_by.length + '">&#10003;&#10003;</span>';
       } else if (m.username && m.username !== (window.authenticatedUser || {}).username) {
         readCheck = '<span style="font-size:10px;color:var(--text-muted);margin-left:6px;">&#10003;</span>';
       }
-      var senderDisplay = escHtml(m.sender);
-      if (m.username) senderDisplay += ' <span style="font-size:10px;color:var(--text-muted);font-weight:400;">@' + escHtml(m.username) + '</span>';
-      div.innerHTML = '<div style="display:flex;align-items:center;"><span class="chat-msg-sender">' + senderDisplay + '</span><span class="chat-msg-time">' + time + '</span>' + readCheck + '</div><div class="chat-msg-text">' + escHtml(m.content) + '</div>';
+      if (grouped) {
+        div.innerHTML = '<div class="chat-msg-text">' + escHtml(m.content) + '</div>';
+      } else {
+        var senderDisplay = '<span class="chat-msg-sender">' + escHtml(m.sender) + '</span>';
+        if (m.username) senderDisplay += ' <span class="chat-msg-username">@' + escHtml(m.username) + '</span>';
+        div.innerHTML = '<div class="chat-msg-header">' + senderDisplay + '<span class="chat-msg-time">' + formatTime(m.sent_at) + '</span>' + readCheck + '</div><div class="chat-msg-text">' + escHtml(m.content) + '</div>';
+      }
     }
     return div;
   }
@@ -343,7 +403,7 @@
       if (!wrap) return;
       var fragment = document.createDocumentFragment();
       d.messages.forEach(function(m) {
-        if (!document.getElementById('msg-' + m.id)) fragment.appendChild(buildMsg(m));
+        if (!document.getElementById('msg-' + m.id)) fragment.appendChild(buildMsg(m, false));
       });
       wrap.insertBefore(fragment, wrap.firstChild);
       var btn = document.getElementById('loadMoreBtn');
@@ -357,6 +417,7 @@
     var text = input.value.trim();
     if (!text) return;
     input.value = '';
+    input.focus();
     var url, body;
     if (currentChannelId) {
       url = API + '/api/chat/channelMessages';
@@ -374,7 +435,15 @@
     .then(function(d) {
       if (d.status === 'success' && d.message) {
         var wrap = document.getElementById('chatMessages');
-        if (wrap) { wrap.appendChild(buildMsg(d.message)); wrap.scrollTop = wrap.scrollHeight; }
+        if (wrap) {
+          var empty = wrap.querySelector('p');
+          if (empty) empty.remove();
+          var grouped = d.message.sender === lastMsgSender && lastMsgTime && (new Date(d.message.sent_at) - new Date(lastMsgTime)) < 300000;
+          wrap.appendChild(buildMsg(d.message, grouped));
+          lastMsgSender = d.message.sender;
+          lastMsgTime = d.message.sent_at;
+          wrap.scrollTop = wrap.scrollHeight;
+        }
       }
     });
   }
@@ -396,9 +465,9 @@
       var el = document.getElementById('typingIndicator');
       if (!el) return;
       if (d.typers && d.typers.length > 0) {
-        el.innerText = d.typers.join(', ') + (d.typers.length === 1 ? ' is typing...' : ' are typing...');
+        el.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span> ' + escHtml(d.typers.join(', ')) + (d.typers.length === 1 ? ' is typing...' : ' are typing...');
       } else {
-        el.innerText = '';
+        el.innerHTML = '';
       }
     }).catch(function() {});
   }
@@ -434,7 +503,6 @@
           document.getElementById('newGroupName').value = '';
           document.getElementById('newGroupDesc').value = '';
           document.getElementById('newGroupCommunity').checked = false;
-          loadGroups();
           if (d.group_id) openChat(d.group_id, name, d.code, community ? 'community' : 'regular');
         }
       })
@@ -456,7 +524,6 @@
         s.innerText = d.message;
         if (d.status === 'success') {
           document.getElementById('joinGroupCode').value = '';
-          loadGroups();
           if (d.group_id) setTimeout(function() { openChat(d.group_id, d.group_name); }, 500);
         }
       })
