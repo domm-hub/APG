@@ -79,9 +79,17 @@
 
   <div id="chatInviteModal" class="chat-modal" style="display:none;">
     <div class="chat-modal-box">
-      <h3 style="font-size:15px;font-weight:600;margin:0 0 12px;">Invite to group</h3>
-      <p style="font-size:13px;color:var(--text-muted);margin:0 0 12px;">Share this code with friends to let them join:</p>
-      <div id="chatInviteCode" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-family:monospace;font-size:16px;text-align:center;word-break:break-all;margin-bottom:12px;cursor:pointer;" title="Click to copy"></div>
+      <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Invite to group</h3>
+      <p style="font-size:12px;color:var(--text-muted);margin:0 0 14px;">Share this link with friends to let them join:</p>
+      <div id="chatInviteLink" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:8px;color:var(--accent);cursor:pointer;" title="Click to copy link"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn btn-primary btn-sm" id="chatInviteCopyLink" style="flex:1;">Copy Link</button>
+        <button class="btn btn-ghost btn-sm" id="chatInviteShare" style="flex:1;display:none;">Share</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;margin-bottom:10px;">
+        <p style="font-size:11px;color:var(--text-muted);margin:0 0 6px;">Or share this invite code:</p>
+        <div id="chatInviteCode" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;font-family:monospace;font-size:16px;text-align:center;letter-spacing:2px;word-break:break-all;cursor:pointer;font-weight:600;" title="Click to copy code"></div>
+      </div>
       <p class="status" id="chatInviteStatus"></p>
       <button class="btn btn-ghost btn-sm" id="chatInviteClose">Close</button>
     </div>
@@ -568,11 +576,26 @@
       .catch(function() { s.innerText = 'Network error.'; });
     });
 
+    function showInviteModal(code) {
+      var link = window.location.origin + '/#chat?join=' + code;
+      document.getElementById('chatInviteLink').innerText = link;
+      document.getElementById('chatInviteCode').innerText = code;
+      document.getElementById('chatInviteStatus').innerText = '';
+      document.getElementById('chatInviteModal').style.display = '';
+      var shareBtn = document.getElementById('chatInviteShare');
+      if (navigator.share) {
+        shareBtn.style.display = '';
+        shareBtn.onclick = function() {
+          navigator.share({ title: 'Join my group on APG', url: link }).catch(function() {});
+        };
+      } else {
+        shareBtn.style.display = 'none';
+      }
+    }
+
     document.getElementById('chatInviteBtn').addEventListener('click', function() {
       if (currentGroupCode) {
-        document.getElementById('chatInviteCode').innerText = currentGroupCode;
-        document.getElementById('chatInviteStatus').innerText = '';
-        document.getElementById('chatInviteModal').style.display = '';
+        showInviteModal(currentGroupCode);
       } else {
         fetch(API + '/api/chat/getGroupCode', {
           method: 'POST',
@@ -583,11 +606,25 @@
         .then(function(d) {
           if (d.status === 'success') {
             currentGroupCode = d.code;
-            document.getElementById('chatInviteCode').innerText = d.code;
-            document.getElementById('chatInviteStatus').innerText = '';
-            document.getElementById('chatInviteModal').style.display = '';
+            showInviteModal(d.code);
           }
         });
+      }
+    });
+
+    document.getElementById('chatInviteLink').addEventListener('click', function() {
+      var link = this.innerText;
+      if (link && navigator.clipboard) {
+        navigator.clipboard.writeText(link);
+        document.getElementById('chatInviteStatus').innerText = 'Link copied!';
+      }
+    });
+
+    document.getElementById('chatInviteCopyLink').addEventListener('click', function() {
+      var link = document.getElementById('chatInviteLink').innerText;
+      if (link && navigator.clipboard) {
+        navigator.clipboard.writeText(link);
+        document.getElementById('chatInviteStatus').innerText = 'Link copied!';
       }
     });
 
@@ -595,7 +632,7 @@
       var code = this.innerText;
       if (code && navigator.clipboard) {
         navigator.clipboard.writeText(code);
-        document.getElementById('chatInviteStatus').innerText = 'Copied!';
+        document.getElementById('chatInviteStatus').innerText = 'Code copied!';
       }
     });
 
