@@ -2,24 +2,19 @@
   <h2 style="font-size:15px;font-weight:600;margin:0 0 16px;">Admin</h2>
   <p class="status" id="statusMsg"></p>
   <div class="admin-tab-bar" style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;">
-    <button class="btn btn-ghost btn-sm" onclick="adminTab('stats')">Stats</button>
-    <button class="btn btn-ghost btn-sm" onclick="adminTab('users')">Users</button>
-    <button class="btn btn-ghost btn-sm" onclick="adminTab('requests')">Requests</button>
-    <button class="btn btn-ghost btn-sm" onclick="adminTab('danger')" style="color:var(--accent);">Danger</button>
+    <button class="btn btn-ghost btn-sm" data-admin-tab="stats">Stats</button>
+    <button class="btn btn-ghost btn-sm" data-admin-tab="users">Users</button>
+    <button class="btn btn-ghost btn-sm" data-admin-tab="requests">Requests</button>
+    <button class="btn btn-ghost btn-sm" data-admin-tab="danger" style="color:var(--accent);">Danger</button>
   </div>
-  <div class="stats" id="adminStats" style="display:flex;gap:12px;flex-wrap:wrap;width:100%;margin-bottom:16px;"></div>
+  <div id="adminStats" style="display:flex;gap:12px;flex-wrap:wrap;width:100%;margin-bottom:16px;"></div>
   <div id="adminUsers" style="display:none;" class="table-wrap"></div>
   <div id="adminRequestsList" style="display:none;" class="table-wrap"></div>
   <div id="adminDanger" style="display:none;"></div>
 </div>
 
-<style>
-  .stat-card { background:var(--surface);padding:12px 18px;border-radius:var(--radius);min-width:120px;flex:1;white-space:nowrap; }
-  .stat-card .num { font-size:22px;font-weight:700; }
-  .stat-card .label { font-size:12px;color:var(--text-muted); }
-</style>
-
 <script>
+(function() {
   var token = sessionStorage.getItem('token');
   var API = 'https://apg-api.vercel.app';
   var s = document.getElementById('statusMsg');
@@ -50,7 +45,7 @@
       if (d.status === 'error') { wrap.innerHTML = '<p>' + d.message + '</p>'; return; }
       wrap.innerHTML = '';
       [{ l:'Total users', v:d.total_users },{ l:'Verified', v:d.verified_users },{ l:'Admins', v:d.admin_users },{ l:'Requests', v:d.total_requests },{ l:'Pending', v:d.pending_requests }]
-      .forEach(function(c) { wrap.innerHTML += '<div class="stat-card"><div class="num">' + c.v + '</div><div class="label">' + c.l + '</div></div>'; });
+      .forEach(function(c) { wrap.innerHTML += '<div style="background:var(--surface);padding:12px 18px;border-radius:var(--radius);min-width:120px;flex:1;white-space:nowrap;"><div style="font-size:22px;font-weight:700;">' + c.v + '</div><div style="font-size:12px;color:var(--text-muted);">' + c.l + '</div></div>'; });
     });
   }
 
@@ -60,19 +55,23 @@
     .then(function(data) {
       var wrap = document.getElementById('adminUsers');
       if (!data.length) { wrap.innerHTML = '<p style="color:var(--text-muted);">No users.</p>'; return; }
-      var html = '<table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Admin</th><th>Coins</th><th>Action</th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>Name</th><th>Email</th><th>Username</th><th>Verified</th><th>Admin</th><th>Coins</th><th>Action</th></tr></thead><tbody>';
       data.forEach(function(u) {
-        html += '<tr><td>' + (u.firstName||'') + ' ' + (u.lastName||'') + '</td><td>' + u.email + '</td><td>' + (u.verified?'yes':'no') + '</td><td>' + (u.is_admin?'yes':'no') + '</td><td>' + (u.coins_infinite?'unlimited':(u.coins||0)) + '</td>' +
-          '<td>' + (u.is_admin?'':'<button class="btn btn-ghost btn-sm" onclick="deleteUser(\''+u.email+'\')" style="color:var(--accent);">Delete</button>') + '</td></tr>';
+        html += '<tr><td>' + (u.firstName||'') + ' ' + (u.lastName||'') + '</td><td>' + u.email + '</td><td>@' + (u.username||'') + '</td><td>' + (u.verified?'yes':'no') + '</td><td>' + (u.is_admin?'yes':'no') + '</td><td>' + (u.coins_infinite?'unlimited':(u.coins||0)) + '</td>' +
+          '<td>' + (u.is_admin?'':'<button class="btn btn-ghost btn-sm js-delete-user" data-email="'+u.email+'" style="color:var(--accent);">Delete</button>') + '</td></tr>';
       });
       html += '</tbody></table>';
       html += '<div style="margin-top:16px;"><h3 style="font-size:14px;font-weight:600;margin:0 0 8px;">Give coins</h3>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
         '<input type="email" id="giveCoinsEmail" placeholder="User email" style="flex:1;min-width:150px;">' +
         '<input type="number" id="giveCoinsAmount" placeholder="Amount" min="1" style="width:100px;">' +
-        '<button class="btn btn-primary btn-sm" onclick="giveCoins()">Give</button>' +
+        '<button class="btn btn-primary btn-sm" id="giveCoinsBtn">Give</button>' +
         '</div><p class="status" id="giveCoinsStatus"></p></div>';
       wrap.innerHTML = html;
+      document.getElementById('giveCoinsBtn').addEventListener('click', giveCoins);
+      wrap.querySelectorAll('.js-delete-user').forEach(function(btn) {
+        btn.addEventListener('click', function() { deleteUser(this.getAttribute('data-email')); });
+      });
     });
   }
 
@@ -86,13 +85,22 @@
       data.forEach(function(r) {
         html += '<tr><td>' + new Date(r.created_at).toLocaleString() + '</td><td>' + (r.type==='challenge'?'Challenge':'Request') + '</td><td>' + r.email + '</td><td class="prompt-cell">' + r.prompt + '</td><td>' + r.status + '</td>' +
           '<td>' +
-          (r.status==='pending'?'<button class="btn btn-ghost btn-sm" onclick="acceptReq('+r.id+')">Accept</button> ':'') +
-          (r.status==='pending'?'<button class="btn btn-ghost btn-sm" onclick="rejectReq('+r.id+')">Reject</button> ':'') +
-          '<button class="btn btn-ghost btn-sm" onclick="deleteReq('+r.id+')" style="color:var(--accent);">Delete</button>' +
+          (r.status==='pending'?'<button class="btn btn-ghost btn-sm js-accept-req" data-id="'+r.id+'">Accept</button> ':'') +
+          (r.status==='pending'?'<button class="btn btn-ghost btn-sm js-reject-req" data-id="'+r.id+'">Reject</button> ':'') +
+          '<button class="btn btn-ghost btn-sm js-delete-req" data-id="'+r.id+'" style="color:var(--accent);">Delete</button>' +
           '</td></tr>';
       });
       html += '</tbody></table>';
       wrap.innerHTML = html;
+      wrap.querySelectorAll('.js-accept-req').forEach(function(btn) {
+        btn.addEventListener('click', function() { acceptReq(parseInt(this.getAttribute('data-id'))); });
+      });
+      wrap.querySelectorAll('.js-reject-req').forEach(function(btn) {
+        btn.addEventListener('click', function() { rejectReq(parseInt(this.getAttribute('data-id'))); });
+      });
+      wrap.querySelectorAll('.js-delete-req').forEach(function(btn) {
+        btn.addEventListener('click', function() { deleteReq(parseInt(this.getAttribute('data-id'))); });
+      });
     });
   }
 
@@ -125,12 +133,20 @@
   }
   function cleanupAll() {
     if(!confirm('ARE YOU SURE? This deletes ALL users and ALL requests!'))return;
-    if(!confirm('Last chance — this cannot be undone!'))return;
+    if(!confirm('Last chance \u2014 this cannot be undone!'))return;
     s.innerText='Deleting...';
     fetch(API+'/api/admin/cleanup', { method:'POST', headers:{'Authorization':'Bearer '+token} })
     .then(function(r){return r.json();}).then(function(d){s.innerText=d.message;if(d.status==='success')setTimeout(function(){parent.location.href='login.html';},1500);});
   }
 
-  document.getElementById('adminDanger').innerHTML = '<h3 style="color:var(--accent);font-size:14px;">Danger zone</h3><button class="btn btn-danger btn-sm" onclick="cleanupAll()">Delete everything (users + requests)</button>';
+  document.getElementById('adminDanger').innerHTML = '<h3 style="color:var(--accent);font-size:14px;">Danger zone</h3><button class="btn btn-danger btn-sm" id="cleanupBtn">Delete everything (users + requests)</button>';
+  document.getElementById('cleanupBtn').addEventListener('click', cleanupAll);
+
+  document.querySelector('.admin-tab-bar').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-admin-tab]');
+    if (btn) adminTab(btn.getAttribute('data-admin-tab'));
+  });
+
   checkAuth();
+})();
 </script>
