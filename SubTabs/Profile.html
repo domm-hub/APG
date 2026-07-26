@@ -83,6 +83,7 @@
 </div>
 
 <script>
+(function() {
   var token = sessionStorage.getItem('token');
   var API = 'https://apg-api.vercel.app';
 
@@ -211,4 +212,5 @@
   if ('Notification' in window && Notification.permission === 'granted') {
     document.getElementById('notifStatus').innerText = 'Notifications are enabled.';
   }
+})();
 </script>
